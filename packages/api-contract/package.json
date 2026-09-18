@@ -1,0 +1,15 @@
+{
+  "name": "@onwave/api-contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OpenAPI-контракт Onwave — источник правды для бэкенда и мобильного клиента",
+  "scripts": {
+    "lint": "spectral lint openapi.yaml",
+    "bundle": "redocly bundle openapi.yaml -o dist/openapi.json",
+    "gen:dart": "echo 'ONW-42: генерация Dart-клиента подключается здесь'"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.25.0",
+    "@stoplight/spectral-cli": "^6.13.1"
+  }
+}

@@ -1,0 +1,45 @@
+name: Mobile
+
+# Включается вместе с ONW-41: пока apps/mobile пуст, workflow ничего не делает.
+on:
+  push:
+    branches: [main]
+    paths: ['apps/mobile/**', 'packages/**', '.github/workflows/mobile.yml']
+  pull_request:
+    paths: ['apps/mobile/**', 'packages/**', '.github/workflows/mobile.yml']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Есть ли Flutter-проект
+        id: probe
+        run: |
+          if [ -f apps/mobile/pubspec.yaml ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "apps/mobile пуст — каркас поднимается в ONW-41"
+          fi
+
+      - uses: subosito/flutter-action@v2
+        if: steps.probe.outputs.ready == 'true'
+        with:
+          channel: stable
+          cache: true
+
+      - if: steps.probe.outputs.ready == 'true'
+        working-directory: apps/mobile
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+          flutter build apk --debug --flavor dev
+
+      - uses: actions/upload-artifact@v4
+        if: steps.probe.outputs.ready == 'true'
+        with:
+          name: onwave-dev-apk
+          path: apps/mobile/build/app/outputs/flutter-apk/*.apk

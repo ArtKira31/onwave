@@ -1,0 +1,150 @@
+openapi: 3.1.0
+info:
+  title: Onwave API
+  version: 0.0.1
+  description: |
+    Источник правды для бэкенда и мобильного клиента (ONW-8).
+    Бэкенд реализует эту схему, Flutter генерирует из неё клиент (ONW-42).
+servers:
+  - url: http://localhost:3000
+    description: Локальная разработка
+  - url: https://api-dev.onwave.app
+    description: Dev-стенд (ONW-14)
+
+tags:
+  - name: health
+  - name: auth
+  - name: cities
+  - name: categories
+  - name: events
+  - name: media
+  - name: favorites
+  - name: moderation
+  - name: reports
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      operationId: getHealth
+      summary: Liveness
+      responses:
+        '200':
+          description: Сервис жив
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [ok] }
+                  version: { type: string }
+
+  /cities:
+    get:
+      tags: [cities]
+      operationId: listCities
+      summary: Активные города
+      responses:
+        '200':
+          description: Список городов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/City' }
+
+  /events:
+    get:
+      tags: [events]
+      operationId: listEvents
+      summary: Лента событий (курсорная пагинация)
+      parameters:
+        - name: city
+          in: query
+          required: true
+          schema: { type: string }
+        - name: cursor
+          in: query
+          schema: { type: string }
+          description: Непрозрачный курсор из предыдущего ответа. Не offset (ONW-28).
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - name: category
+          in: query
+          schema: { type: array, items: { type: string } }
+        - name: dateFrom
+          in: query
+          schema: { type: string, format: date-time }
+        - name: dateTo
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Страница ленты
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/EventCard' }
+                  nextCursor:
+                    type: [string, 'null']
+        '400':
+          $ref: '#/components/responses/Error'
+
+components:
+  responses:
+    Error:
+      description: Ошибка
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    # ONW-17: один формат ошибки на всё API. Мобилка парсит его в одном месте.
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Стабильный машиночитаемый ключ
+          examples: [VALIDATION_FAILED, EVENT_NOT_FOUND, RATE_LIMITED]
+        message: { type: string }
+        details: {}
+        requestId: { type: string }
+
+    City:
+      type: object
+      required: [id, slug, name, timezone]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        timezone:
+          type: string
+          description: IANA-таймзона. «Сегодня» считается по ней, а не по времени телефона.
+          examples: [Asia/Tbilisi]
+        lat: { type: number }
+        lon: { type: number }
+
+    EventCard:
+      type: object
+      required: [id, title, status]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        status: { type: string, enum: [draft, pending, published, rejected, hidden] }
+        startsAt: { type: [string, 'null'], format: date-time }
+        coverUrl: { type: [string, 'null'] }
+        categorySlug: { type: [string, 'null'] }
+        venueName: { type: [string, 'null'] }
+        cityId: { type: string, format: uuid }
+        isFavorite: { type: boolean }

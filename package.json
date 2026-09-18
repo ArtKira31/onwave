@@ -1,0 +1,26 @@
+{
+  "name": "onwave",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "api:dev": "pnpm --filter @onwave/api start:dev",
+    "api:build": "pnpm --filter @onwave/api build",
+    "api:test": "pnpm --filter @onwave/api test",
+    "api:e2e": "pnpm --filter @onwave/api test:e2e",
+    "db:migrate": "pnpm --filter @onwave/api prisma:migrate",
+    "db:seed": "pnpm --filter @onwave/api prisma:seed",
+    "contract:lint": "pnpm --filter @onwave/api-contract lint",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript-eslint": "^8.11.0"
+  }
+}

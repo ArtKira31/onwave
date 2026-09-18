@@ -1,0 +1,292 @@
+// Доменная модель Onwave (ONW-7, ONW-19).
+//
+// Три решения зафиксированы явно:
+//  1. Event отдельно от EventSession — концерт в 3 датах это 1 событие + 3 сеанса.
+//  2. Всё время в UTC (timestamptz) + таймзона города/площадки.
+//  3. source + externalId с уникальным индексом — заложено под будущий импорт.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+enum UserRole {
+  user
+  organizer
+  moderator
+  admin
+}
+
+enum EventStatus {
+  draft
+  pending
+  published
+  rejected
+  hidden
+}
+
+enum ReportTargetType {
+  event
+  user
+}
+
+enum ReportReason {
+  spam
+  abuse
+  fraud
+  adult
+  other
+}
+
+enum ReportStatus {
+  open
+  resolved
+  dismissed
+}
+
+model City {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  /// IANA-таймзона: «сегодня» считается по ней, а не по времени телефона.
+  timezone  String
+  lat       Float
+  lon       Float
+  isActive  Boolean  @default(true)
+  popularity Int     @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  venues Venue[]
+  events Event[]
+
+  @@index([isActive, popularity])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  /// Ключ локализации, не готовая строка.
+  nameKey   String
+  icon      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  events Event[]
+}
+
+model Venue {
+  id        String   @id @default(uuid())
+  cityId    String
+  name      String
+  address   String
+  lat       Float?
+  lon       Float?
+  /// Таймзона площадки: обычно совпадает с городом, но хранится отдельно.
+  timezone  String?
+  placeId   String?
+  source    String?
+  externalId String?
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  city   City    @relation(fields: [cityId], references: [id])
+  events Event[]
+
+  @@unique([source, externalId])
+  @@index([cityId])
+}
+
+model User {
+  id           String   @id @default(uuid())
+  role         UserRole @default(user)
+  /// Гость (ONW-21): аккаунта нет, но сессия и device-id есть.
+  isGuest      Boolean  @default(true)
+  deviceId     String?  @unique
+  email        String?  @unique
+  displayName  String?
+  avatarUrl    String?
+  googleSub    String?  @unique
+  appleSub     String?  @unique
+  /// Версия принятого EULA (ONW-61).
+  acceptedTermsVersion String?
+  acceptedTermsAt      DateTime? @db.Timestamptz
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @updatedAt @db.Timestamptz
+  deletedAt    DateTime? @db.Timestamptz
+
+  events        Event[]
+  favorites     Favorite[]
+  mediaAssets   MediaAsset[]
+  reportsMade   Report[]      @relation("ReportAuthor")
+  blocksMade    UserBlock[]   @relation("Blocker")
+  blocksAgainst UserBlock[]   @relation("Blocked")
+  refreshTokens RefreshToken[]
+  moderationActions ModerationAction[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  /// Хранится хэш, не сам токен.
+  tokenHash String   @unique
+  deviceId  String?
+  /// Цепочка ротации: переиспользование старого токена отзывает всю цепочку (ONW-22).
+  familyId  String
+  expiresAt DateTime @db.Timestamptz
+  revokedAt DateTime? @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+model Event {
+  id          String      @id @default(uuid())
+  status      EventStatus @default(draft)
+  authorId    String
+  cityId      String
+  venueId     String?
+  categoryId  String?
+  title       String
+  description String?
+  /// Кнопка «Купить билет» — только внешняя ссылка, оплаты внутри нет.
+  ticketUrl   String?
+  coverId     String?
+  /// Денормализованное время ближайшего сеанса: по нему сортируется лента.
+  startsAt    DateTime?   @db.Timestamptz
+  /// Свободный адрес, когда площадки в справочнике нет.
+  rawAddress  String?
+  lat         Float?
+  lon         Float?
+  /// Адрес не распознан геокодером — пометка для модератора (ONW-36).
+  geoUnresolved Boolean   @default(false)
+  source      String?
+  externalId  String?
+  publishedAt DateTime?   @db.Timestamptz
+  rejectionReason String?
+  createdAt   DateTime    @default(now()) @db.Timestamptz
+  updatedAt   DateTime    @updatedAt @db.Timestamptz
+  deletedAt   DateTime?   @db.Timestamptz
+
+  author   User        @relation(fields: [authorId], references: [id])
+  city     City        @relation(fields: [cityId], references: [id])
+  venue    Venue?      @relation(fields: [venueId], references: [id])
+  category Category?   @relation(fields: [categoryId], references: [id])
+  cover    MediaAsset? @relation("EventCover", fields: [coverId], references: [id])
+
+  sessions   EventSession[]
+  favorites  Favorite[]
+  media      MediaAsset[]   @relation("EventMedia")
+  moderationActions ModerationAction[]
+
+  @@unique([source, externalId])
+  /// Основной индекс ленты (ONW-28).
+  @@index([cityId, status, startsAt])
+  /// Курсорная пагинация: (startsAt, id).
+  @@index([startsAt, id])
+  @@index([authorId, status])
+}
+
+model EventSession {
+  id        String   @id @default(uuid())
+  eventId   String
+  startsAt  DateTime @db.Timestamptz
+  endsAt    DateTime? @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, startsAt])
+  @@index([startsAt])
+}
+
+model MediaAsset {
+  id          String   @id @default(uuid())
+  ownerId     String
+  eventId     String?
+  /// Ключ объекта в бакете.
+  storageKey  String   @unique
+  mimeType    String
+  sizeBytes   Int?
+  width       Int?
+  height      Int?
+  /// Загрузка подтверждена клиентом и проверена сервером (ONW-34).
+  isConfirmed Boolean  @default(false)
+  /// Воркер ресайза отработал (ONW-35): {thumb, medium, large}.
+  variants    Json?
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  owner      User    @relation(fields: [ownerId], references: [id])
+  event      Event?  @relation("EventMedia", fields: [eventId], references: [id])
+  coverOf    Event[] @relation("EventCover")
+
+  @@index([ownerId])
+  @@index([isConfirmed, createdAt])
+}
+
+model Favorite {
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([userId, eventId])
+  @@index([userId, createdAt])
+}
+
+model Report {
+  id         String           @id @default(uuid())
+  authorId   String
+  targetType ReportTargetType
+  targetId   String
+  reason     ReportReason
+  comment    String?
+  status     ReportStatus     @default(open)
+  createdAt  DateTime         @default(now()) @db.Timestamptz
+  resolvedAt DateTime?        @db.Timestamptz
+
+  author User @relation("ReportAuthor", fields: [authorId], references: [id])
+
+  /// Повторная жалоба того же человека на тот же объект не создаёт дубль.
+  @@unique([authorId, targetType, targetId])
+  /// Очередь модерации сортируется по возрасту: SLA 24 часа (ONW-38).
+  @@index([status, createdAt])
+}
+
+model UserBlock {
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockerId])
+}
+
+/// Журнал решений модерации: кто, когда, почему (ONW-31, ONW-32).
+model ModerationAction {
+  id          String      @id @default(uuid())
+  eventId     String
+  moderatorId String
+  fromStatus  EventStatus
+  toStatus    EventStatus
+  reason      String?
+  createdAt   DateTime    @default(now()) @db.Timestamptz
+
+  event     Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  moderator User  @relation(fields: [moderatorId], references: [id])
+
+  @@index([eventId, createdAt])
+}

@@ -1,0 +1,68 @@
+# Локальное окружение Onwave. Поднимается одной командой: pnpm infra:up
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: onwave-postgres
+    environment:
+      POSTGRES_USER: onwave
+      POSTGRES_PASSWORD: onwave
+      POSTGRES_DB: onwave
+    ports:
+      - "5432:5432"
+    volumes:
+      - onwave-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onwave -d onwave"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: onwave-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - onwave-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: onwave-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: onwave
+      MINIO_ROOT_PASSWORD: onwave123
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # веб-консоль: http://localhost:9001
+    volumes:
+      - onwave-minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Создаёт бакет при первом запуске, затем завершается.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 onwave onwave123 &&
+      mc mb --ignore-existing local/onwave-media &&
+      mc anonymous set download local/onwave-media
+      "
+
+volumes:
+  onwave-pg:
+  onwave-redis:
+  onwave-minio:
