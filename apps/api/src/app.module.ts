@@ -4,6 +4,9 @@ import { ConfigModule } from './common/config/config.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RequestIdMiddleware, REQUEST_ID_HEADER } from './common/http/request-id.middleware';
 import { HealthModule } from './modules/health/health.module';
+import { CitiesModule } from './modules/cities/cities.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { EventsModule } from './modules/events/events.module';
 
 @Module({
   imports: [
@@ -24,8 +27,10 @@ import { HealthModule } from './modules/health/health.module';
     }),
     PrismaModule,
     HealthModule,
-    // Дальше: AuthModule (ONW-21, ONW-22), CitiesModule (ONW-26),
-    // CategoriesModule (ONW-27), EventsModule (ONW-28..31), MediaModule (ONW-34),
+    CitiesModule,
+    CategoriesModule,
+    EventsModule,
+    // Дальше: AuthModule (ONW-21, ONW-22), MediaModule (ONW-34),
     // ModerationModule (ONW-32), ReportsModule (ONW-38).
   ],
 })
