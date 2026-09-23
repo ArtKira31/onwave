@@ -1,0 +1,15 @@
+{
+  "@@locale": "en",
+  "appTitle": "onwave",
+  "selectCity": "Select City",
+  "feedTitle": "Feed",
+  "daysRemaining": "{count, plural, one{{count} day} other{{count} days}}",
+  "@daysRemaining": {
+    "description": "Remaining days to event",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}

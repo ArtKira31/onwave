@@ -1,0 +1,42 @@
+name: mobile
+description: "A new Flutter project."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.5.1
+  go_router: ^18.0.1
+
+  # Наше системное решение для локализации (Перенесли сюда)
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.16.1
+  go_router_builder: ^4.5.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon_prod.png"
+  flavors:
+    dev:
+      image_path: "assets/images/icon_dev.png"
+    stage:
+      image_path: "assets/images/icon_stage.png"
+    prod:
+      image_path: "assets/images/icon_prod.png"

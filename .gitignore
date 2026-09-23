@@ -16,3 +16,6 @@ coverage/
 *.iml
 apps/mobile/build/
 apps/mobile/ios/Pods/
+
+# FVM Version Cache
+.fvm/

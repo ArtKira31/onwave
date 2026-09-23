@@ -1,0 +1,47 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "onwave (development)",
+            "request": "launch",
+            "type": "dart",
+            "program": "apps/mobile/lib/main.dart",
+            "args": [
+                "--flavor",
+                "dev",
+                "--dart-define",
+                "BASE_URL=https://onwave.ru",
+                "--dart-define",
+                "SENTRY_DSN=https://dev-sentry-link"
+            ]
+        },
+        {
+            "name": "onwave (staging)",
+            "request": "launch",
+            "type": "dart",
+            "program": "apps/mobile/lib/main.dart",
+            "args": [
+                "--flavor",
+                "stage",
+                "--dart-define",
+                "BASE_URL=https://onwave.ru",
+                "--dart-define",
+                "SENTRY_DSN=https://stage-sentry-link"
+            ]
+        },
+        {
+            "name": "onwave (production)",
+            "request": "launch",
+            "type": "dart",
+            "program": "apps/mobile/lib/main.dart",
+            "args": [
+                "--flavor",
+                "prod",
+                "--dart-define",
+                "BASE_URL=https://onwave.ru",
+                "--dart-define",
+                "SENTRY_DSN=https://prod-sentry-link"
+            ]
+        }
+    ]
+}

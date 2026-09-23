@@ -1,0 +1,15 @@
+{
+  "@@locale": "ru",
+  "appTitle": "onwave",
+  "selectCity": "Выбрать город",
+  "feedTitle": "Лента",
+  "daysRemaining": "{count, plural, one{{count} день} few{{count} дня} other{{count} дней}}",
+  "@daysRemaining": {
+    "description": "Оставшиеся дни до события",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}
