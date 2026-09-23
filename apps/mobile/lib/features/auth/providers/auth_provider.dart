@@ -14,10 +14,10 @@ final secureStorageProvider = Provider((ref) => SecureStorageService());
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final SecureStorageService _storage;
-  final Ref _ref;
+  // СТРОКУ С _ref МЫ УДАЛИЛИ
 
-  AuthNotifier(this._storage, this._ref)
-    : super(AuthState(isAuthenticated: false)) {
+  // Теперь в конструктор передаем ТОЛЬКО storage
+  AuthNotifier(this._storage) : super(AuthState(isAuthenticated: false)) {
     _tryRestoreSession(); // Автоматически восстанавливаем сессию при холодном старте
   }
 
@@ -74,5 +74,5 @@ class AuthNotifier extends StateNotifier<AuthState> {
 // Передаем ref внутрь нотификатора для будущей инвалидации кэшей
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final storage = ref.watch(secureStorageProvider);
-  return AuthNotifier(storage, ref);
+  return AuthNotifier(storage); // Передаем ТОЛЬКО storage!
 });
