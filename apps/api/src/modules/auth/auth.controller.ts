@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Get } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Ip, Post, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -34,8 +34,8 @@ export class AuthController {
       'возвращает ту же учётку, а не создаёт новую.',
   })
   @ApiOkResponse({ type: AuthTokensDto })
-  async guest(@Body() body: GuestSessionRequest): Promise<AuthTokensDto> {
-    const { user, ...tokens } = await this.auth.createGuestSession(body.deviceId);
+  async guest(@Body() body: GuestSessionRequest, @Ip() ip: string): Promise<AuthTokensDto> {
+    const { user, ...tokens } = await this.auth.createGuestSession(body.deviceId, ip);
     return { ...tokens, user: MeDto.from(user) };
   }
 

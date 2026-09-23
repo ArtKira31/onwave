@@ -10,6 +10,7 @@ import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { sniffImageMime, SIGNATURE_BYTES } from './image-signature';
 import { MEDIA_QUEUE, RESIZE_JOB, type ResizeJobData } from './media.constants';
+import { RateLimitService } from '../../common/rate-limit/rate-limit.service';
 import type { AccessTokenPayload } from '../auth/token.service';
 import type { CreateUploadUrlRequest, UploadTicketDto } from './dto/media.dto';
 import type { Env } from '../../common/config/env';
@@ -29,6 +30,7 @@ export class MediaService {
     private readonly s3: S3Service,
     private readonly config: ConfigService<Env, true>,
     @InjectQueue(MEDIA_QUEUE) private readonly queue: Queue<ResizeJobData>,
+    private readonly limits: RateLimitService,
   ) {}
 
   /**
@@ -51,6 +53,23 @@ export class MediaService {
         { maxBytes: max },
       );
     }
+
+    // Два лимита: по числу файлов и по суммарному объёму. Одного количества
+    // мало — тридцать файлов по десять мегабайт это уже триста мегабайт в сутки
+    // с одного аккаунта.
+    await this.limits.consume({
+      scope: 'media-upload',
+      subject: user.sub,
+      limit: this.config.get('RATE_LIMIT_UPLOADS_PER_DAY', { infer: true }),
+      windowSeconds: 86_400,
+    });
+    await this.limits.consume({
+      scope: 'media-bytes',
+      subject: user.sub,
+      limit: this.config.get('RATE_LIMIT_UPLOAD_BYTES_PER_DAY', { infer: true }),
+      windowSeconds: 86_400,
+      cost: request.sizeBytes,
+    });
 
     const storageKey = `uploads/${user.sub}/${randomUUID()}.${EXTENSION[request.mimeType]}`;
 

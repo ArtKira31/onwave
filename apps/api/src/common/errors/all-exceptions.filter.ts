@@ -74,6 +74,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     }
 
+    // ONW-33: клиент и прокси читают Retry-After заголовком, а не выкапывают
+    // его из тела ошибки.
+    const retryAfter = retryAfterSeconds(body.details);
+    if (retryAfter !== null) {
+      res.setHeader('Retry-After', String(retryAfter));
+    }
+
     res.status(status).json({ ...body, requestId });
   }
 }
@@ -86,4 +93,10 @@ function isHealthCheckResult(response: unknown): boolean {
     'status' in response &&
     'details' in response
   );
+}
+
+function retryAfterSeconds(details: unknown): number | null {
+  if (typeof details !== 'object' || details === null) return null;
+  const value = (details as { retryAfter?: unknown }).retryAfter;
+  return typeof value === 'number' && value > 0 ? Math.ceil(value) : null;
 }

@@ -5,6 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from './common/config/config.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
+import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 import { StorageModule } from './common/storage/storage.module';
 import { RequestIdMiddleware, REQUEST_ID_HEADER } from './common/http/request-id.middleware';
 import { HealthModule } from './modules/health/health.module';
@@ -51,6 +52,7 @@ function redisConnection(): { host: string; port: number; password?: string; db?
     }),
     PrismaModule,
     RedisModule,
+    RateLimitModule,
     StorageModule,
     ScheduleModule.forRoot(),
     BullModule.forRoot({ connection: redisConnection() }),

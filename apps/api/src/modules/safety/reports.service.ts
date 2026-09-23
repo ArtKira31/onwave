@@ -5,6 +5,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { EventStatusService } from '../events/event-status.service';
+import { RateLimitService } from '../../common/rate-limit/rate-limit.service';
 import type { CreateReportRequest } from './dto/safety.dto';
 import type { Env } from '../../common/config/env';
 
@@ -16,6 +17,7 @@ export class ReportsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService<Env, true>,
     private readonly status: EventStatusService,
+    private readonly limits: RateLimitService,
   ) {}
 
   /**
@@ -27,6 +29,15 @@ export class ReportsService {
    * в одиночку.
    */
   async create(authorId: string, input: CreateReportRequest): Promise<void> {
+    // Жалобами тоже злоупотребляют: заваливать ими неугодного автора —
+    // ровно такой же спам, только через механизм защиты.
+    await this.limits.consume({
+      scope: 'report',
+      subject: authorId,
+      limit: this.config.get('RATE_LIMIT_REPORTS_PER_DAY', { infer: true }),
+      windowSeconds: 86_400,
+    });
+
     await this.assertTargetExists(input.targetType, input.targetId);
 
     if (input.targetType === 'user' && input.targetId === authorId) {

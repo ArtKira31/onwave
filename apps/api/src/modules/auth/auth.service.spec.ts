@@ -32,12 +32,16 @@ function make(stored: unknown) {
     favorite: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn() },
   };
   const oauth = { verify: jest.fn() };
+  const limits = { consume: jest.fn().mockResolvedValue(undefined) };
+  const config = { get: jest.fn().mockReturnValue(20) };
   const service = new AuthService(
     prisma as unknown as PrismaService,
     tokens as unknown as TokenService,
     oauth as unknown as OAuthVerifierService,
+    limits as never,
+    config as never,
   );
-  return { service, tokens, prisma, oauth };
+  return { service, tokens, prisma, oauth, limits };
 }
 
 const live = {

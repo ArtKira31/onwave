@@ -43,6 +43,17 @@ const envSchema = z.object({
   /** Сколько независимых жалоб автоматически скрывают событие до решения модератора. */
   REPORTS_HIDE_THRESHOLD: z.coerce.number().int().positive().default(3),
 
+  /**
+   * Лимиты (ONW-33). Меняются конфигом, а не релизом: подкрутить порог во
+   * время спам-волны нужно за минуты, а не за цикл выката.
+   */
+  RATE_LIMIT_SUBMITS_PER_DAY: z.coerce.number().int().positive().default(3),
+  RATE_LIMIT_SUBMITS_PER_DAY_ORGANIZER: z.coerce.number().int().positive().default(30),
+  RATE_LIMIT_UPLOADS_PER_DAY: z.coerce.number().int().positive().default(30),
+  RATE_LIMIT_UPLOAD_BYTES_PER_DAY: z.coerce.number().int().positive().default(200 * 1024 * 1024),
+  RATE_LIMIT_REPORTS_PER_DAY: z.coerce.number().int().positive().default(20),
+  RATE_LIMIT_GUEST_SESSIONS_PER_HOUR: z.coerce.number().int().positive().default(20),
+
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 

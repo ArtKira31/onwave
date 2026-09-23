@@ -6,6 +6,9 @@ import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { AbilityFactory, Action } from '../auth/rbac/ability.factory';
 import { EventStatusService } from './event-status.service';
+import { RateLimitService } from '../../common/rate-limit/rate-limit.service';
+import { ConfigService } from '@nestjs/config';
+import type { Env } from '../../common/config/env';
 import type { AccessTokenPayload } from '../auth/token.service';
 import type { EventDraftInput } from './dto/event-draft.input';
 
@@ -21,6 +24,8 @@ export class EventWritesService {
     private readonly redis: RedisService,
     private readonly abilities: AbilityFactory,
     private readonly status: EventStatusService,
+    private readonly limits: RateLimitService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   /**
@@ -125,6 +130,20 @@ export class EventWritesService {
   async submit(user: AccessTokenPayload, id: string): Promise<Event> {
     const event = await this.loadOwned(user, id);
     await this.assertReadyToPublish(event);
+
+    // Лимит на submit, а не на создание черновика: черновиков человек может
+    // наплодить сколько угодно, в ленту они не попадают. Считается то, что
+    // реально доходит до модерации.
+    const isOrganizer = user.role === 'organizer' || user.role === 'admin';
+    await this.limits.consume({
+      scope: 'event-submit',
+      subject: user.sub,
+      limit: this.config.get(
+        isOrganizer ? 'RATE_LIMIT_SUBMITS_PER_DAY_ORGANIZER' : 'RATE_LIMIT_SUBMITS_PER_DAY',
+        { infer: true },
+      ),
+      windowSeconds: 86_400,
+    });
 
     // organizer верифицирован, его событиям очередь не нужна.
     const target: EventStatus = user.role === 'organizer' || user.role === 'admin'

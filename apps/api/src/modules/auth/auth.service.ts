@@ -5,6 +5,9 @@ import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { TokenService, type TokenPair } from './token.service';
 import { OAuthVerifierService } from './oauth/oauth-verifier.service';
+import { RateLimitService } from '../../common/rate-limit/rate-limit.service';
+import { ConfigService } from '@nestjs/config';
+import type { Env } from '../../common/config/env';
 import type { OAuthProvider } from './oauth/oauth.config';
 
 @Injectable()
@@ -15,6 +18,8 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly tokens: TokenService,
     private readonly oauth: OAuthVerifierService,
+    private readonly limits: RateLimitService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   /**
@@ -27,7 +32,18 @@ export class AuthService {
    * Повторный запрос с тем же device-id возвращает ту же учётку — иначе при
    * каждом перезапуске приложения в базе появлялся бы новый пользователь.
    */
-  async createGuestSession(deviceId: string): Promise<TokenPair & { user: User }> {
+  async createGuestSession(deviceId: string, ip?: string): Promise<TokenPair & { user: User }> {
+    // Лимит по адресу, а не по device-id: device-id придумывает клиент,
+    // и перебором им можно наплодить сколько угодно гостевых учёток.
+    if (ip) {
+      await this.limits.consume({
+        scope: 'guest-session',
+        subject: ip,
+        limit: this.config.get('RATE_LIMIT_GUEST_SESSIONS_PER_HOUR', { infer: true }),
+        windowSeconds: 3_600,
+      });
+    }
+
     const user = await this.prisma.user.upsert({
       where: { deviceId },
       update: {},
