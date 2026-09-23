@@ -11,8 +11,10 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisHealthIndicator } from './indicators/redis.health';
 import { StorageHealthIndicator } from './indicators/storage.health';
 import type { Env } from '../../common/config/env';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiExcludeController()
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(

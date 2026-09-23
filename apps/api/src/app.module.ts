@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module';
 import { CitiesModule } from './modules/cities/cities.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { EventsModule } from './modules/events/events.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -29,10 +30,11 @@ import { EventsModule } from './modules/events/events.module';
     PrismaModule,
     RedisModule,
     HealthModule,
+    AuthModule,
     CitiesModule,
     CategoriesModule,
     EventsModule,
-    // Дальше: AuthModule (ONW-21, ONW-22), MediaModule (ONW-34),
+    // Дальше: MediaModule (ONW-34),
     // ModerationModule (ONW-32), ReportsModule (ONW-38).
   ],
 })

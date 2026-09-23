@@ -2,8 +2,10 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CitiesService } from './cities.service';
 import { CityDto, CityListDto } from './city.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('cities')
+@Public()
 @Controller('cities')
 export class CitiesController {
   constructor(private readonly cities: CitiesService) {}

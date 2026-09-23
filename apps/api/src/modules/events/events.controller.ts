@@ -3,8 +3,10 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { ListEventsQuery } from './dto/list-events.query';
 import { EventCardPageDto, EventDetailDto } from './dto/event.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('events')
+@Public()
 @Controller('events')
 export class EventsController {
   constructor(private readonly events: EventsService) {}
