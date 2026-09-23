@@ -77,7 +77,7 @@ export class FavoritesService {
       deletedAt: null,
       startsAt: upcoming ? { gte: now } : { lt: now },
       ...(hidden.length ? { authorId: { notIn: hidden } } : {}),
-      ...(query.cursor ? cursorFilter(decodeCursor(query.cursor)) : {}),
+      ...(query.cursor ? cursorFilter(decodeCursor(query.cursor), 'startsAt', upcoming ? 'asc' : 'desc') : {}),
     };
 
     const rows = (await this.prisma.event.findMany({
@@ -97,7 +97,7 @@ export class FavoritesService {
       items: items.map((event) => EventCardDto.from(event, true)),
       nextCursor:
         hasMore && last?.startsAt
-          ? encodeCursor({ startsAt: last.startsAt.toISOString(), id: last.id })
+          ? encodeCursor({ at: last.startsAt.toISOString(), id: last.id })
           : null,
     };
   }

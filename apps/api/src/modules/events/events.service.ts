@@ -106,7 +106,7 @@ export class EventsService {
       items: items.map((event) => EventCardDto.from(event, favorited.has(event.id))),
       nextCursor:
         hasMore && last?.startsAt
-          ? encodeCursor({ startsAt: last.startsAt.toISOString(), id: last.id })
+          ? encodeCursor({ at: last.startsAt.toISOString(), id: last.id })
           : null,
     };
   }
@@ -159,7 +159,7 @@ export class EventsService {
       authorId: userId,
       deletedAt: null,
       ...(query.status?.length ? { status: { in: query.status as never } } : {}),
-      ...(query.cursor ? cursorFilter(decodeCursor(query.cursor)) : {}),
+      ...(query.cursor ? cursorFilter(decodeCursor(query.cursor), 'startsAt', 'desc') : {}),
     };
 
     const rows = (await this.prisma.event.findMany({
@@ -181,7 +181,7 @@ export class EventsService {
       })),
       nextCursor:
         hasMore && last?.startsAt
-          ? encodeCursor({ startsAt: last.startsAt.toISOString(), id: last.id })
+          ? encodeCursor({ at: last.startsAt.toISOString(), id: last.id })
           : null,
     };
   }

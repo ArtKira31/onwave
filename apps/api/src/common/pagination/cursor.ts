@@ -13,16 +13,17 @@ import { HttpStatus } from '@nestjs/common';
  * Курсор непрозрачен для клиента: формат — деталь реализации, base64 здесь не
  * шифрование, а способ отбить желание его разбирать и конструировать.
  */
-export interface FeedCursor {
-  startsAt: string;
+export interface PageCursor {
+  /** Значение поля сортировки. Какого именно — решает вызывающий. */
+  at: string;
   id: string;
 }
 
-export function encodeCursor(cursor: FeedCursor): string {
+export function encodeCursor(cursor: PageCursor): string {
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url');
 }
 
-export function decodeCursor(raw: string): FeedCursor {
+export function decodeCursor(raw: string): PageCursor {
   let parsed: unknown;
   try {
     parsed = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
@@ -33,14 +34,14 @@ export function decodeCursor(raw: string): FeedCursor {
   if (
     typeof parsed !== 'object' ||
     parsed === null ||
-    typeof (parsed as FeedCursor).id !== 'string' ||
-    typeof (parsed as FeedCursor).startsAt !== 'string' ||
-    Number.isNaN(Date.parse((parsed as FeedCursor).startsAt))
+    typeof (parsed as PageCursor).id !== 'string' ||
+    typeof (parsed as PageCursor).at !== 'string' ||
+    Number.isNaN(Date.parse((parsed as PageCursor).at))
   ) {
     throw invalidCursor();
   }
 
-  return parsed as FeedCursor;
+  return parsed as PageCursor;
 }
 
 function invalidCursor(): AppException {
@@ -52,15 +53,21 @@ function invalidCursor(): AppException {
 }
 
 /**
- * Сортировка ленты — по паре (startsAt, id), поэтому и курсор по ней же.
- * Одного startsAt мало: у событий в один и тот же час порядок был бы
- * недетерминированным, и строки на границе страниц терялись бы.
+ * Сортировка всегда идёт по паре (поле, id), поэтому и курсор по ней же.
+ * Одного поля мало: у строк с одинаковым значением порядок был бы
+ * недетерминированным, и они терялись бы на границе страниц.
+ *
+ * `field` — по какому полю сортируем: `startsAt` у ленты, `createdAt` у
+ * очереди модерации. `direction` — в какую сторону идёт обход.
  */
-export function cursorFilter(cursor: FeedCursor): {
-  OR: [{ startsAt: { gt: Date } }, { startsAt: Date; id: { gt: string } }];
-} {
-  const startsAt = new Date(cursor.startsAt);
+export function cursorFilter(
+  cursor: PageCursor,
+  field: 'startsAt' | 'createdAt' = 'startsAt',
+  direction: 'asc' | 'desc' = 'asc',
+): Record<string, unknown> {
+  const at = new Date(cursor.at);
+  const op = direction === 'asc' ? 'gt' : 'lt';
   return {
-    OR: [{ startsAt: { gt: startsAt } }, { startsAt, id: { gt: cursor.id } }],
+    OR: [{ [field]: { [op]: at } }, { [field]: at, id: { gt: cursor.id } }],
   };
 }

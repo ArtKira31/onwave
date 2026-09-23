@@ -1151,6 +1151,12 @@ components:
         ageHours:
           type: number
           description: Возраст записи. SLA реакции по правилам Apple — 24 часа.
+        lockedBy:
+          type: [string, 'null']
+          format: uuid
+          description: |
+            Модератор, который сейчас принимает решение по этой записи.
+            Клиент по нему гасит кнопки, чтобы двое не разбирали одно и то же.
         event: { $ref: '#/components/schemas/EventDetail' }
         report: { $ref: '#/components/schemas/ReportInput' }
         reportCount:

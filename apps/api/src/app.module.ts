@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { MediaModule } from './modules/media/media.module';
 import { SafetyModule } from './modules/safety/safety.module';
+import { ModerationModule } from './modules/moderation/moderation.module';
 
 /**
  * BullMQ принимает параметры соединения, а не URL, поэтому разбираем REDIS_URL
@@ -64,8 +65,7 @@ function redisConnection(): { host: string; port: number; password?: string; db?
     FavoritesModule,
     MediaModule,
     SafetyModule,
-    // Дальше: MediaModule (ONW-34),
-    // ModerationModule (ONW-32), ReportsModule (ONW-38).
+    ModerationModule,
   ],
 })
 export class AppModule implements NestModule {
