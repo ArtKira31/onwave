@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { CitiesService } from '../cities/cities.service';
+import { FavoritesService } from '../favorites/favorites.service';
 import { cursorFilter, decodeCursor, encodeCursor } from '../../common/pagination/cursor';
 import { resolvePreset } from './date-presets';
 import type { ListEventsQuery } from './dto/list-events.query';
@@ -36,6 +37,7 @@ export class EventsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cities: CitiesService,
+    private readonly favorites: FavoritesService,
   ) {}
 
   /**
@@ -46,7 +48,7 @@ export class EventsService {
    * сеансам и индекс `(cityId, status, startsAt)` был бы бесполезен. Поле
    * пересчитывается при правке сеансов и фоновой задачей, когда сеанс проходит.
    */
-  async list(query: ListEventsQuery): Promise<EventCardPageDto> {
+  async list(query: ListEventsQuery, viewerId?: string): Promise<EventCardPageDto> {
     const city = await this.cities.resolve(query.city);
     const now = new Date();
 
@@ -85,8 +87,14 @@ export class EventsService {
     const items = hasMore ? rows.slice(0, query.limit) : rows;
     const last = items.at(-1);
 
+    // Один запрос на страницу вместо одного на событие.
+    const favorited = await this.favorites.favoriteIds(
+      viewerId,
+      items.map((event) => event.id),
+    );
+
     return {
-      items: items.map(EventCardDto.from),
+      items: items.map((event) => EventCardDto.from(event, favorited.has(event.id))),
       nextCursor:
         hasMore && last?.startsAt
           ? encodeCursor({ startsAt: last.startsAt.toISOString(), id: last.id })
@@ -101,7 +109,7 @@ export class EventsService {
    * подтверждается. Разграничение автор/модератор появится вместе с ONW-25 —
    * пока доступ есть только к published.
    */
-  async getById(id: string): Promise<EventDetailDto> {
+  async getById(id: string, viewerId?: string): Promise<EventDetailDto> {
     const event = (await this.prisma.event.findFirst({
       where: { id, status: 'published', deletedAt: null },
       include: DETAIL_RELATIONS,
@@ -115,7 +123,8 @@ export class EventsService {
       );
     }
 
-    return EventDetailDto.from(event, new Date());
+    const favorited = await this.favorites.favoriteIds(viewerId, [event.id]);
+    return EventDetailDto.from(event, new Date(), viewerId, favorited.has(event.id));
   }
 
   private resolveWindow(

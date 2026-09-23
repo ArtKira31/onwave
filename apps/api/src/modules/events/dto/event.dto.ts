@@ -86,7 +86,7 @@ export class EventCardDto {
   @ApiProperty({ nullable: true, type: Number }) priceFrom!: number | null;
   @ApiProperty() isFavorite!: boolean;
 
-  static from(event: EventWithCardRelations): EventCardDto {
+  static from(event: EventWithCardRelations, isFavorite = false): EventCardDto {
     return {
       id: event.id,
       title: event.title,
@@ -98,9 +98,7 @@ export class EventCardDto {
       venueName: event.venue?.name ?? null,
       cityId: event.cityId,
       priceFrom: null,
-      // ONW-37: пока избранного нет, флаг всегда false — поле в контракте
-      // обязательное, и мобилке нужна стабильная форма ответа.
-      isFavorite: false,
+      isFavorite,
     };
   }
 }
@@ -133,7 +131,12 @@ export class EventDetailDto {
   @ApiProperty({ nullable: true, type: String, format: 'date-time' }) publishedAt!: string | null;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 
-  static from(event: EventWithDetailRelations, now: Date): EventDetailDto {
+  static from(
+    event: EventWithDetailRelations,
+    now: Date,
+    viewerId?: string,
+    isFavorite = false,
+  ): EventDetailDto {
     return {
       id: event.id,
       title: event.title,
@@ -150,8 +153,10 @@ export class EventDetailDto {
       cover: MediaVariantsDto.from(event.cover),
       ticketUrl: event.ticketUrl,
       priceFrom: null,
-      isFavorite: false,
-      canEdit: false,
+      isFavorite,
+      // Клиент по нему решает, показывать ли кнопку редактирования. Реальные
+      // права проверяются на сервере при самой правке (ONW-25).
+      canEdit: viewerId === event.author.id,
       rejectionReason: event.rejectionReason,
       publishedAt: event.publishedAt?.toISOString() ?? null,
       createdAt: event.createdAt.toISOString(),
