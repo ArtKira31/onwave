@@ -1,10 +1,26 @@
 openapi: 3.1.0
 info:
   title: Onwave API
-  version: 0.0.1
+  version: 0.1.0
+  contact:
+    name: Onwave
+    url: https://linear.app/onwave/project/faza-0-fundament-d0cb96da478b
   description: |
     Источник правды для бэкенда и мобильного клиента (ONW-8).
     Бэкенд реализует эту схему, Flutter генерирует из неё клиент (ONW-42).
+
+    Договорённости, на которых держится всё остальное:
+
+    * **Один формат ошибки** — `Error` с машиночитаемым `code`. Мобилка ветвит
+      логику по `code`, а не по тексту `message`.
+    * **Пагинация курсорная, не offset.** Лента постоянно меняется, offset даёт
+      дубли и пропуски. Курсор непрозрачный, клиент его не разбирает.
+    * **Время в UTC.** «Сегодня» и «на выходных» считаются по таймзоне города,
+      которая приходит в `City.timezone`, а не по времени телефона.
+    * **Гость — полноценный клиент.** Всё чтение доступно по гостевому токену;
+      логин нужен только для избранного, создания событий и жалоб.
+    * **Оплаты внутри нет.** `ticketUrl` — внешняя ссылка, приложение её открывает.
+
 servers:
   - url: http://localhost:3000
     description: Локальная разработка
@@ -13,14 +29,30 @@ servers:
 
 tags:
   - name: health
+    description: Пробы для платформы деплоя
   - name: auth
+    description: Гостевые сессии, соц-логин, ротация токенов
   - name: cities
+    description: Справочник городов
   - name: categories
+    description: Справочник категорий
   - name: events
-  - name: media
+    description: Лента, карточка события, создание и редактирование
   - name: favorites
+    description: Избранное
+  - name: media
+    description: Загрузка изображений
+  - name: geo
+    description: Подсказки адресов и геокодинг
   - name: moderation
-  - name: reports
+    description: Очередь модерации
+  - name: safety
+    description: Жалобы и блокировки (App Store Guideline 1.2)
+  - name: me
+    description: Текущий пользователь и его события
+
+security:
+  - bearerAuth: []
 
 paths:
   /health:
@@ -28,63 +60,174 @@ paths:
       tags: [health]
       operationId: getHealth
       summary: Liveness
+      description: Отвечает, пока процесс жив. В зависимости не ходит.
+      security: []
       responses:
         '200':
           description: Сервис жив
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status: { type: string, enum: [ok] }
-                  version: { type: string }
+              schema: { $ref: '#/components/schemas/HealthStatus' }
+
+  /health/ready:
+    get:
+      tags: [health]
+      operationId: getReadiness
+      summary: Readiness
+      description: Проверяет Postgres, Redis и доступность бакета.
+      security: []
+      responses:
+        '200':
+          description: Готов принимать трафик
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReadinessStatus' }
+        '503':
+          description: Зависимости недоступны
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReadinessStatus' }
+
+  /auth/guest:
+    post:
+      tags: [auth]
+      operationId: createGuestSession
+      summary: Гостевая сессия по device-id
+      description: |
+        Приложение работает без регистрации (ONW-21). Повторный запрос с тем же
+        device-id возвращает ту же гостевую учётку, а не создаёт новую.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId]
+              properties:
+                deviceId:
+                  type: string
+                  minLength: 16
+                  maxLength: 128
+                  description: Генерируется клиентом один раз и живёт в secure storage.
+      responses:
+        '200':
+          description: Пара токенов гостя
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/google:
+    post:
+      tags: [auth]
+      operationId: loginWithGoogle
+      summary: Вход через Google
+      description: |
+        Обмен id_token на токены Onwave (ONW-23). Если запрос пришёл с гостевым
+        токеном в заголовке — гостевая учётка апгрейдится, а не дублируется.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OAuthLoginRequest' }
+      responses:
+        '200':
+          description: Пара токенов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/apple:
+    post:
+      tags: [auth]
+      operationId: loginWithApple
+      summary: Вход через Apple
+      description: |
+        Обязателен по правилам App Store при наличии любого другого соц-логина (ONW-24).
+        Email может прийти в виде private relay или не прийти вовсе — аккаунт опирается
+        на `sub`. Имя Apple отдаёт только при первом входе, поэтому клиент передаёт его
+        именно тогда.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/OAuthLoginRequest'
+                - type: object
+                  properties:
+                    fullName:
+                      type: [string, 'null']
+                      description: Только при первом входе. Второй раз Apple его не отдаст.
+      responses:
+        '200':
+          description: Пара токенов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      operationId: refreshTokens
+      summary: Обновление пары токенов
+      description: |
+        Refresh одноразовый: при обмене выдаётся новый, старый инвалидируется (ONW-22).
+        Переиспользование старого refresh трактуется как кража и отзывает всю цепочку —
+        клиент получает 401 и уводит пользователя на экран входа.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200':
+          description: Новая пара токенов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Выход с текущего устройства
+      description: Отзывает refresh-цепочку этого устройства. Остальные сессии живут дальше.
+      responses:
+        '204': { description: Сессия завершена }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout-all:
+    post:
+      tags: [auth]
+      operationId: logoutAll
+      summary: Выход со всех устройств
+      description: Отзывает все refresh-цепочки пользователя. Нужен, если устройство потеряно.
+      responses:
+        '204': { description: Все сессии завершены }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /cities:
     get:
       tags: [cities]
       operationId: listCities
       summary: Активные города
+      description: Сортировка по популярности, затем по алфавиту. Ответ кэшируется.
+      security: []
       responses:
         '200':
           description: Список городов
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items: { $ref: '#/components/schemas/City' }
-
-  /events:
-    get:
-      tags: [events]
-      operationId: listEvents
-      summary: Лента событий (курсорная пагинация)
-      parameters:
-        - name: city
-          in: query
-          required: true
-          schema: { type: string }
-        - name: cursor
-          in: query
-          schema: { type: string }
-          description: Непрозрачный курсор из предыдущего ответа. Не offset (ONW-28).
-        - name: limit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
-        - name: category
-          in: query
-          schema: { type: array, items: { type: string } }
-        - name: dateFrom
-          in: query
-          schema: { type: string, format: date-time }
-        - name: dateTo
-          in: query
-          schema: { type: string, format: date-time }
-      responses:
-        '200':
-          description: Страница ленты
           content:
             application/json:
               schema:
@@ -93,33 +236,667 @@ paths:
                 properties:
                   items:
                     type: array
-                    items: { $ref: '#/components/schemas/EventCard' }
-                  nextCursor:
-                    type: [string, 'null']
-        '400':
-          $ref: '#/components/responses/Error'
+                    items: { $ref: '#/components/schemas/City' }
+
+  /categories:
+    get:
+      tags: [categories]
+      operationId: listCategories
+      summary: Справочник категорий
+      description: |
+        Набор фиксированный. `nameKey` — ключ локализации, а не готовая строка:
+        переводы живут в мобилке.
+      security: []
+      responses:
+        '200':
+          description: Список категорий
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Category' }
+
+  /events:
+    get:
+      tags: [events]
+      operationId: listEvents
+      summary: Лента событий
+      description: |
+        Главный запрос приложения (ONW-28). Отдаются только события в статусе
+        `published`, у которых есть хотя бы один будущий сеанс. Контент
+        заблокированных авторов отфильтрован (ONW-39).
+      security: []
+      parameters:
+        - name: city
+          in: query
+          required: true
+          description: Slug или id города. Лента всегда скоупится по городу.
+          schema: { type: string }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: category
+          in: query
+          description: Один или несколько slug категорий.
+          schema:
+            type: array
+            items: { type: string }
+        - name: dateFrom
+          in: query
+          schema: { type: string, format: date-time }
+        - name: dateTo
+          in: query
+          schema: { type: string, format: date-time }
+        - name: preset
+          in: query
+          description: |
+            Готовый диапазон дат, считается по таймзоне города. Взаимоисключим
+            с `dateFrom`/`dateTo`.
+          schema:
+            type: string
+            enum: [today, tomorrow, weekend, week, month]
+        - name: query
+          in: query
+          description: Полнотекстовый поиск по названию и описанию.
+          schema: { type: string, maxLength: 200 }
+      responses:
+        '200':
+          description: Страница ленты
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventCardPage' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+    post:
+      tags: [events]
+      operationId: createEvent
+      summary: Создать черновик события
+      description: |
+        Создаётся именно черновик (ONW-30): форма мультишаговая, целиком её никто
+        не отправляет. Публикация — отдельным переходом `submit`.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Защита от двойного тапа — повтор с тем же ключом вернёт то же событие.
+          schema: { type: string, maxLength: 64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventDraftInput' }
+      responses:
+        '201':
+          description: Черновик создан
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /events/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    get:
+      tags: [events]
+      operationId: getEvent
+      summary: Карточка события
+      description: |
+        Опубликованное видно всем, включая гостя. Черновик и `pending` — только
+        автору и модератору; остальным **404, а не 403**: существование чужого
+        черновика не подтверждается.
+      security: []
+      responses:
+        '200':
+          description: Событие
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [events]
+      operationId: updateEvent
+      summary: Обновить черновик
+      description: |
+        Частичное обновление — форма сохраняется по шагам. Редактировать можно
+        свой `draft` и `rejected`; правка опубликованного отправляет его на
+        повторную модерацию.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventDraftInput' }
+      responses:
+        '200':
+          description: Обновлено
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /events/{id}/submit:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [events]
+      operationId: submitEvent
+      summary: Отправить событие на модерацию
+      description: |
+        Здесь включается полная валидация обязательных полей — до этого момента
+        черновик может быть каким угодно неполным. У роли `organizer` событие
+        публикуется сразу, минуя очередь.
+      responses:
+        '200':
+          description: Отправлено (`pending`) или сразу опубликовано для organizer
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/InvalidStateTransition' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /events/{id}/favorite:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    put:
+      tags: [favorites]
+      operationId: addFavorite
+      summary: Добавить в избранное
+      description: Идемпотентно — повторный вызов не ошибка.
+      responses:
+        '204': { description: В избранном }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [favorites]
+      operationId: removeFavorite
+      summary: Убрать из избранного
+      description: Идемпотентно — удаление отсутствующей записи не ошибка.
+      responses:
+        '204': { description: Убрано }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /favorites:
+    get:
+      tags: [favorites]
+      operationId: listFavorites
+      summary: Избранные события
+      description: Единственная в Фазе 0 причина, по которой зрителю нужен аккаунт.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: scope
+          in: query
+          description: Прошедшие события отделены от будущих.
+          schema:
+            type: string
+            enum: [upcoming, past]
+            default: upcoming
+      responses:
+        '200':
+          description: Страница избранного
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventCardPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me:
+    get:
+      tags: [me]
+      operationId: getMe
+      summary: Текущий пользователь
+      description: Профиль владельца токена. Для гостя `isGuest` = true и профиль почти пустой.
+      responses:
+        '200':
+          description: Профиль
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/events:
+    get:
+      tags: [me]
+      operationId: listMyEvents
+      summary: Мои события
+      description: |
+        Экран «Мои события» (ONW-58) — пользователь должен понимать, почему его
+        событие не видно в ленте, поэтому статус и причина отказа приходят здесь.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/EventStatus' }
+      responses:
+        '200':
+          description: Страница моих событий
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventCardPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /media/upload-url:
+    post:
+      tags: [media]
+      operationId: createUploadUrl
+      summary: Presigned URL для загрузки
+      description: |
+        Файл идёт напрямую в бакет мимо API (ONW-34) — иначе на загрузках ляжет
+        весь трафик приложения. URL живёт минуты.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mimeType, sizeBytes]
+              properties:
+                mimeType:
+                  type: string
+                  enum: [image/jpeg, image/png, image/heic]
+                sizeBytes:
+                  type: integer
+                  minimum: 1
+                  description: Реальный размер проверяется политикой presigned URL.
+      responses:
+        '201':
+          description: Ссылка для загрузки
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UploadTicket' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /media/{id}/complete:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [media]
+      operationId: completeUpload
+      summary: Подтвердить загрузку
+      description: |
+        Сервер проверяет реальный объект в бакете и ставит задачу на ресайз (ONW-35).
+        До готовности вариантов карточка показывает плейсхолдер.
+      responses:
+        '200':
+          description: Ассет подтверждён
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaAsset' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /geo/autocomplete:
+    get:
+      tags: [geo]
+      operationId: autocompleteAddress
+      summary: Подсказки адреса
+      description: Скоуп по выбранному городу. Ответы кэшируются — квоты провайдеров платные.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema: { type: string, minLength: 3, maxLength: 200 }
+        - name: city
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Варианты адресов
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AddressSuggestion' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /geo/resolve:
+    post:
+      tags: [geo]
+      operationId: resolveAddress
+      summary: Нормализовать адрес
+      description: |
+        Из `placeId` или строки получаем координаты, город и таймзону (ONW-36).
+        Город события определяется по координатам, а не по выбору пользователя
+        в онбординге.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                placeId: { type: string }
+                address: { type: string, maxLength: 300 }
+      responses:
+        '200':
+          description: Нормализованный адрес
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResolvedAddress' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+
+  /reports:
+    post:
+      tags: [safety]
+      operationId: createReport
+      summary: Пожаловаться на событие или пользователя
+      description: |
+        Требование App Store Guideline 1.2 (ONW-38). Повторная жалоба того же
+        человека на тот же объект не создаёт дубль. При превышении порога
+        независимых жалоб событие автоматически уходит в `hidden` до решения
+        модератора. SLA реакции — 24 часа.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportInput' }
+      responses:
+        '201': { description: Жалоба принята }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /users/{id}/block:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [safety]
+      operationId: blockUser
+      summary: Заблокировать пользователя
+      description: |
+        Односторонняя и мгновенная — решения модератора не требует. После неё
+        события автора пропадают из всех выдач для заблокировавшего (ONW-39).
+      responses:
+        '204': { description: Заблокирован }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [safety]
+      operationId: unblockUser
+      summary: Снять блокировку
+      description: После снятия события автора снова появляются в выдачах.
+      responses:
+        '204': { description: Разблокирован }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /blocks:
+    get:
+      tags: [safety]
+      operationId: listBlockedUsers
+      summary: Заблокированные пользователи
+      description: Нужен, чтобы пользователь мог разблокировать — иначе блокировка необратима.
+      responses:
+        '200':
+          description: Список блокировок
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/BlockedUser' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /moderation/queue:
+    get:
+      tags: [moderation]
+      operationId: getModerationQueue
+      summary: Очередь модерации
+      description: |
+        Только для ролей `moderator` и `admin`. Сортировка по возрасту — самое
+        старое первым, поле `ageHours` показывает приближение к SLA в 24 часа.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: kind
+          in: query
+          schema:
+            type: string
+            enum: [pending_events, reports]
+            default: pending_events
+      responses:
+        '200':
+          description: Страница очереди
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModerationQueuePage' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /moderation/events/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [moderation]
+      operationId: approveEvent
+      summary: Одобрить событие
+      description: Переводит `pending` в `published`. Решение пишется в журнал модерации.
+      responses:
+        '200':
+          description: Опубликовано
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/InvalidStateTransition' }
+
+  /moderation/events/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [moderation]
+      operationId: rejectEvent
+      summary: Отклонить событие
+      description: Причина обязательна и видна автору на экране «Мои события».
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  enum: [spam, abuse, fraud, adult, incomplete, duplicate, other]
+                comment: { type: string, maxLength: 1000 }
+      responses:
+        '200':
+          description: Отклонено
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/InvalidStateTransition' }
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Access-токен живёт 15 минут. Гостевой токен выдаётся `POST /auth/guest`
+        и открывает всё чтение.
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      description: |
+        Непрозрачный курсор из `nextCursor` предыдущего ответа. Клиент его не
+        разбирает и не конструирует. Не offset (ONW-28).
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      description: Ограничен сверху, чтобы базу нельзя было выкачать одним запросом.
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+    EventId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
   responses:
-    Error:
-      description: Ошибка
+    ValidationFailed:
+      description: Тело или параметры не прошли валидацию
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Нет валидного токена
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Роли или владения недостаточно
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Объект не найден или скрыт от этого пользователя
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    InvalidStateTransition:
+      description: Переход статуса недопустим
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: Превышен лимит запросов
+      headers:
+        Retry-After:
+          description: Через сколько секунд можно повторить.
+          schema: { type: integer }
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
 
   schemas:
-    # ONW-17: один формат ошибки на всё API. Мобилка парсит его в одном месте.
     Error:
       type: object
+      description: |
+        ONW-17: один формат на всё API. Мобилка ветвит логику по `code`, текст
+        `message` показывать пользователю напрямую не обязана.
       required: [code, message]
       properties:
         code:
           type: string
-          description: Стабильный машиночитаемый ключ
-          examples: [VALIDATION_FAILED, EVENT_NOT_FOUND, RATE_LIMITED]
+          enum:
+            - VALIDATION_FAILED
+            - UNAUTHORIZED
+            - INVALID_OAUTH_TOKEN
+            - FORBIDDEN
+            - NOT_FOUND
+            - EVENT_NOT_FOUND
+            - INVALID_STATE_TRANSITION
+            - RATE_LIMITED
+            - INTERNAL
         message: { type: string }
-        details: {}
-        requestId: { type: string }
+        details:
+          description: Пофайловые ошибки валидации либо контекст ошибки.
+          type: [object, 'null']
+          additionalProperties: true
+        requestId:
+          type: string
+          description: Совпадает с request-id в логах — по нему ищется вся цепочка.
+
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok] }
+        version: { type: string }
+        gitSha: { type: string }
+
+    ReadinessStatus:
+      type: object
+      required: [status, checks]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        checks:
+          type: object
+          properties:
+            database: { type: boolean }
+            redis: { type: boolean }
+            storage: { type: boolean }
+
+    AuthTokens:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, user]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn:
+          type: integer
+          description: Время жизни access-токена в секундах.
+        user: { $ref: '#/components/schemas/Me' }
+
+    OAuthLoginRequest:
+      type: object
+      required: [idToken, deviceId]
+      properties:
+        idToken: { type: string }
+        deviceId:
+          type: string
+          description: Тот же, что в гостевой сессии — по нему гость апгрейдится.
+
+    UserRole:
+      type: string
+      enum: [user, organizer, moderator, admin]
+
+    EventStatus:
+      type: string
+      enum: [draft, pending, published, rejected, hidden]
+
+    Me:
+      type: object
+      required: [id, role, isGuest]
+      properties:
+        id: { type: string, format: uuid }
+        role: { $ref: '#/components/schemas/UserRole' }
+        isGuest:
+          type: boolean
+          description: У гостя нет аккаунта, но есть валидная сессия.
+        email: { type: [string, 'null'], format: email }
+        displayName: { type: [string, 'null'] }
+        avatarUrl: { type: [string, 'null'], format: uri }
+        acceptedTermsVersion:
+          type: [string, 'null']
+          description: Версия принятого EULA (ONW-61). Null — согласие ещё не получено.
+
+    UserPublic:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: [string, 'null'] }
+        avatarUrl: { type: [string, 'null'], format: uri }
+        isOrganizer: { type: boolean }
 
     City:
       type: object
@@ -130,21 +907,258 @@ components:
         name: { type: string }
         timezone:
           type: string
-          description: IANA-таймзона. «Сегодня» считается по ней, а не по времени телефона.
+          description: |
+            IANA-таймзона. «Сегодня» и пресеты дат считаются по ней, а не по
+            времени телефона.
           examples: [Asia/Tbilisi]
         lat: { type: number }
         lon: { type: number }
 
+    Category:
+      type: object
+      required: [id, slug, nameKey]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        nameKey:
+          type: string
+          description: Ключ локализации, не готовая строка.
+          examples: [category.concerts]
+        icon: { type: [string, 'null'] }
+        sortOrder: { type: integer }
+
+    Venue:
+      type: object
+      required: [id, name, address]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        address: { type: string }
+        lat: { type: [number, 'null'] }
+        lon: { type: [number, 'null'] }
+        cityId: { type: string, format: uuid }
+
+    EventSession:
+      type: object
+      required: [id, startsAt]
+      properties:
+        id: { type: string, format: uuid }
+        startsAt:
+          type: string
+          format: date-time
+          description: UTC. Локальное время считается по таймзоне города.
+        endsAt: { type: [string, 'null'], format: date-time }
+        isPast: { type: boolean }
+
+    MediaVariants:
+      type: object
+      description: |
+        Заполняется воркером ресайза (ONW-35). Пока пусто — клиент показывает
+        плейсхолдер, а не битую картинку.
+      properties:
+        thumb: { type: [string, 'null'], format: uri }
+        medium: { type: [string, 'null'], format: uri }
+        large: { type: [string, 'null'], format: uri }
+
+    MediaAsset:
+      type: object
+      required: [id, isConfirmed]
+      properties:
+        id: { type: string, format: uuid }
+        isConfirmed: { type: boolean }
+        isProcessed:
+          type: boolean
+          description: Варианты готовы.
+        width: { type: [integer, 'null'] }
+        height: { type: [integer, 'null'] }
+        variants: { $ref: '#/components/schemas/MediaVariants' }
+
+    UploadTicket:
+      type: object
+      required: [assetId, uploadUrl, expiresAt]
+      properties:
+        assetId: { type: string, format: uuid }
+        uploadUrl: { type: string, format: uri }
+        method: { type: string, enum: [PUT, POST], default: PUT }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+          description: Заголовки, которые клиент обязан отправить вместе с файлом.
+        expiresAt: { type: string, format: date-time }
+
     EventCard:
       type: object
-      required: [id, title, status]
+      description: Облегчённая карточка для ленты — без полного описания.
+      required: [id, title, status, cityId]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
-        status: { type: string, enum: [draft, pending, published, rejected, hidden] }
-        startsAt: { type: [string, 'null'], format: date-time }
-        coverUrl: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        startsAt:
+          type: [string, 'null']
+          format: date-time
+          description: Ближайший будущий сеанс. По нему сортируется лента.
+        sessionCount:
+          type: integer
+          description: Больше одного — в карточке показывается «и ещё N дат».
+        cover: { $ref: '#/components/schemas/MediaVariants' }
         categorySlug: { type: [string, 'null'] }
         venueName: { type: [string, 'null'] }
         cityId: { type: string, format: uuid }
+        priceFrom:
+          type: [number, 'null']
+          description: Только для показа. Оплаты внутри приложения нет.
         isFavorite: { type: boolean }
+        rejectionReason:
+          type: [string, 'null']
+          description: Приходит только в `/me/events` для статуса `rejected`.
+
+    EventCardPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/EventCard' }
+        nextCursor:
+          type: [string, 'null']
+          description: Null — страниц больше нет.
+
+    EventDetail:
+      type: object
+      required: [id, title, status, cityId, author, sessions]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        cityId: { type: string, format: uuid }
+        category: { $ref: '#/components/schemas/Category' }
+        venue: { $ref: '#/components/schemas/Venue' }
+        rawAddress:
+          type: [string, 'null']
+          description: Свободный адрес, когда площадки в справочнике нет.
+        lat: { type: [number, 'null'] }
+        lon: { type: [number, 'null'] }
+        author: { $ref: '#/components/schemas/UserPublic' }
+        sessions:
+          type: array
+          items: { $ref: '#/components/schemas/EventSession' }
+        cover: { $ref: '#/components/schemas/MediaVariants' }
+        gallery:
+          type: array
+          items: { $ref: '#/components/schemas/MediaAsset' }
+        ticketUrl:
+          type: [string, 'null']
+          format: uri
+          description: Внешняя ссылка. Приложение её открывает, оплаты внутри нет.
+        priceFrom: { type: [number, 'null'] }
+        isFavorite: { type: boolean }
+        canEdit:
+          type: boolean
+          description: Клиент по нему решает, показывать ли кнопку редактирования.
+        rejectionReason: { type: [string, 'null'] }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    EventDraftInput:
+      type: object
+      description: |
+        Все поля опциональны: форма сохраняется по шагам. Полная валидация
+        включается на `submit`, а не здесь.
+      properties:
+        title: { type: string, minLength: 3, maxLength: 140 }
+        description: { type: string, maxLength: 5000 }
+        categorySlug: { type: string }
+        cityId: { type: string, format: uuid }
+        venueId: { type: [string, 'null'], format: uuid }
+        rawAddress: { type: string, maxLength: 300 }
+        placeId:
+          type: string
+          description: Из `/geo/autocomplete`. Предпочтительнее свободного адреса.
+        sessions:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required: [startsAt]
+            properties:
+              startsAt: { type: string, format: date-time }
+              endsAt: { type: [string, 'null'], format: date-time }
+        coverAssetId: { type: [string, 'null'], format: uuid }
+        galleryAssetIds:
+          type: array
+          maxItems: 10
+          items: { type: string, format: uuid }
+        ticketUrl:
+          type: [string, 'null']
+          format: uri
+          description: Только http(s).
+        priceFrom: { type: [number, 'null'], minimum: 0 }
+
+    AddressSuggestion:
+      type: object
+      required: [placeId, title]
+      properties:
+        placeId: { type: string }
+        title: { type: string }
+        subtitle: { type: [string, 'null'] }
+
+    ResolvedAddress:
+      type: object
+      required: [address, resolved]
+      properties:
+        resolved:
+          type: boolean
+          description: |
+            False — адрес не распознан. Событие всё равно создаётся, но получает
+            пометку для модератора.
+        address: { type: string }
+        lat: { type: [number, 'null'] }
+        lon: { type: [number, 'null'] }
+        cityId: { type: [string, 'null'], format: uuid }
+        timezone: { type: [string, 'null'] }
+        venueId:
+          type: [string, 'null']
+          format: uuid
+          description: Если адрес совпал с площадкой из справочника.
+
+    ReportInput:
+      type: object
+      required: [targetType, targetId, reason]
+      properties:
+        targetType: { type: string, enum: [event, user] }
+        targetId: { type: string, format: uuid }
+        reason: { type: string, enum: [spam, abuse, fraud, adult, other] }
+        comment: { type: string, maxLength: 1000 }
+
+    BlockedUser:
+      type: object
+      required: [user, blockedAt]
+      properties:
+        user: { $ref: '#/components/schemas/UserPublic' }
+        blockedAt: { type: string, format: date-time }
+
+    ModerationQueueItem:
+      type: object
+      required: [kind, createdAt, ageHours]
+      properties:
+        kind: { type: string, enum: [pending_event, report] }
+        createdAt: { type: string, format: date-time }
+        ageHours:
+          type: number
+          description: Возраст записи. SLA реакции по правилам Apple — 24 часа.
+        event: { $ref: '#/components/schemas/EventDetail' }
+        report: { $ref: '#/components/schemas/ReportInput' }
+        reportCount:
+          type: integer
+          description: Сколько независимых жалоб на этот объект.
+
+    ModerationQueuePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ModerationQueueItem' }
+        nextCursor: { type: [string, 'null'] }

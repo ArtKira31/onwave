@@ -6,10 +6,12 @@
   "scripts": {
     "lint": "spectral lint openapi.yaml",
     "bundle": "redocly bundle openapi.yaml -o dist/openapi.json",
-    "gen:dart": "echo 'ONW-42: генерация Dart-клиента подключается здесь'"
+    "gen:dart": "echo 'ONW-42: генерация Dart-клиента подключается здесь'",
+    "mock": "prism mock openapi.yaml --port 4010 --cors"
   },
   "devDependencies": {
     "@redocly/cli": "^1.25.0",
-    "@stoplight/spectral-cli": "^6.13.1"
+    "@stoplight/spectral-cli": "^6.13.1",
+    "@stoplight/prism-cli": "^5.11.0"
   }
 }
