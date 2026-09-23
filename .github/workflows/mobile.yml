@@ -3,7 +3,9 @@ name: Mobile
 # Включается вместе с ONW-41: пока apps/mobile пуст, workflow ничего не делает.
 on:
   push:
-    branches: [main]
+    # develop — общая ветка команды: пуш в неё обязан проверяться.
+    # Без этого работа попадает в общий код, ни разу не собранная в CI.
+    branches: [main, develop]
     paths: ['apps/mobile/**', 'packages/**', '.github/workflows/mobile.yml']
   pull_request:
     paths: ['apps/mobile/**', 'packages/**', '.github/workflows/mobile.yml']

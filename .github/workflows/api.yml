@@ -2,7 +2,9 @@ name: API
 
 on:
   push:
-    branches: [main]
+    # develop — общая ветка команды: пуш в неё обязан проверяться.
+    # Без этого работа попадает в общий код, ни разу не собранная в CI.
+    branches: [main, develop]
     paths: ['apps/api/**', 'packages/**', '.github/workflows/api.yml']
   pull_request:
     paths: ['apps/api/**', 'packages/**', '.github/workflows/api.yml']
