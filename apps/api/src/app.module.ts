@@ -1,8 +1,11 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
+import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from './common/config/config.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
+import { StorageModule } from './common/storage/storage.module';
 import { RequestIdMiddleware, REQUEST_ID_HEADER } from './common/http/request-id.middleware';
 import { HealthModule } from './modules/health/health.module';
 import { CitiesModule } from './modules/cities/cities.module';
@@ -10,6 +13,23 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { EventsModule } from './modules/events/events.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { MediaModule } from './modules/media/media.module';
+
+/**
+ * BullMQ принимает параметры соединения, а не URL, поэтому разбираем REDIS_URL
+ * здесь: держать в конфиге два представления одного и того же — заявка на то,
+ * что однажды они разойдутся.
+ */
+function redisConnection(): { host: string; port: number; password?: string; db?: number } {
+  const url = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
+  const db = url.pathname.replace('/', '');
+  return {
+    host: url.hostname,
+    port: Number(url.port || 6379),
+    ...(url.password ? { password: url.password } : {}),
+    ...(db ? { db: Number(db) } : {}),
+  };
+}
 
 @Module({
   imports: [
@@ -30,12 +50,16 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     }),
     PrismaModule,
     RedisModule,
+    StorageModule,
+    ScheduleModule.forRoot(),
+    BullModule.forRoot({ connection: redisConnection() }),
     HealthModule,
     AuthModule,
     CitiesModule,
     CategoriesModule,
     EventsModule,
     FavoritesModule,
+    MediaModule,
     // Дальше: MediaModule (ONW-34),
     // ModerationModule (ONW-32), ReportsModule (ONW-38).
   ],
