@@ -4,6 +4,8 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { TokenService, type TokenPair } from './token.service';
+import { OAuthVerifierService } from './oauth/oauth-verifier.service';
+import type { OAuthProvider } from './oauth/oauth.config';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +14,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokens: TokenService,
+    private readonly oauth: OAuthVerifierService,
   ) {}
 
   /**
@@ -33,6 +36,118 @@ export class AuthService {
 
     const pair = await this.tokens.issuePair(user, deviceId);
     return { ...pair, user };
+  }
+
+
+  /**
+   * Вход через Google (ONW-23) или Apple (ONW-24).
+   *
+   * Аккаунт опирается на `sub` провайдера, а не на email: у Google email можно
+   * сменить, а Apple при private relay отдаёт подставной адрес или не отдаёт
+   * ничего. Email используется только для связывания с существующей учёткой и
+   * только верифицированный — иначе это захват чужого аккаунта по незанятому
+   * адресу.
+   */
+  async loginWithOAuth(
+    provider: OAuthProvider,
+    idToken: string,
+    deviceId: string,
+    fullName?: string | null,
+  ): Promise<TokenPair & { user: User }> {
+    const identity = await this.oauth.verify(provider, idToken);
+    const subField = provider === 'google' ? 'googleSub' : 'appleSub';
+
+    let user = await this.prisma.user.findFirst({
+      where: { [subField]: identity.subject, deletedAt: null },
+    });
+
+    if (!user && identity.email && identity.emailVerified) {
+      // Связывание: человек уже заходил другим способом с тем же адресом.
+      const byEmail = await this.prisma.user.findFirst({
+        where: { email: identity.email, isGuest: false, deletedAt: null },
+      });
+      if (byEmail) {
+        user = await this.prisma.user.update({
+          where: { id: byEmail.id },
+          data: { [subField]: identity.subject },
+        });
+      }
+    }
+
+    if (!user) {
+      user = await this.upgradeGuestOrCreate(deviceId, subField, identity, fullName);
+    } else {
+      await this.absorbGuest(user, deviceId);
+      // Apple отдаёт имя только при первом входе. Если тогда не сохранили —
+      // второго шанса не будет, поэтому дописываем при первой возможности.
+      if (!user.displayName && fullName) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { displayName: fullName },
+        });
+      }
+    }
+
+    const pair = await this.tokens.issuePair(user, deviceId);
+    return { ...pair, user };
+  }
+
+  /** Превращает гостя этого устройства в полноценного пользователя, не теряя его данные. */
+  private async upgradeGuestOrCreate(
+    deviceId: string,
+    subField: 'googleSub' | 'appleSub',
+    identity: { subject: string; email: string | null; name: string | null; avatarUrl: string | null },
+    fullName?: string | null,
+  ): Promise<User> {
+    const guest = await this.prisma.user.findFirst({
+      where: { deviceId, isGuest: true, deletedAt: null },
+    });
+
+    const data = {
+      [subField]: identity.subject,
+      email: identity.email,
+      displayName: fullName ?? identity.name,
+      avatarUrl: identity.avatarUrl,
+      isGuest: false,
+    };
+
+    if (guest) {
+      return this.prisma.user.update({ where: { id: guest.id }, data });
+    }
+    return this.prisma.user.create({ data: { ...data, deviceId, role: 'user' } });
+  }
+
+  /**
+   * Пользователь уже существовал, но на этом устройстве успел накопиться гость.
+   *
+   * Переносим его избранное и освобождаем device-id: иначе всё, что человек
+   * отметил до логина, для него исчезает — а это ровно тот момент, когда он
+   * решил завести аккаунт.
+   */
+  private async absorbGuest(user: User, deviceId: string): Promise<void> {
+    const guest = await this.prisma.user.findFirst({
+      where: { deviceId, isGuest: true, deletedAt: null, NOT: { id: user.id } },
+    });
+    if (!guest) return;
+
+    const favorites = await this.prisma.favorite.findMany({ where: { userId: guest.id } });
+    if (favorites.length > 0) {
+      await this.prisma.favorite.createMany({
+        data: favorites.map((f) => ({ userId: user.id, eventId: f.eventId })),
+        skipDuplicates: true,
+      });
+    }
+
+    // device-id уникален на пользователя, поэтому гостя нужно от него отвязать.
+    await this.prisma.user.update({
+      where: { id: guest.id },
+      data: { deviceId: null, deletedAt: new Date() },
+    });
+
+    this.logger.log(
+      { guestId: guest.id, userId: user.id, favorites: favorites.length },
+      'Гостевая учётка поглощена при логине',
+    );
   }
 
   /**

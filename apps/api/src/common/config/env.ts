@@ -26,6 +26,15 @@ const envSchema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('30d'),
 
+  /**
+   * Допустимые audience провайдеров — по одному client id на платформу,
+   * через запятую. Токен, выписанный для чужого приложения, обязан
+   * отбиваться: иначе любой, у кого есть Google-клиент, входит в Onwave
+   * под чужим аккаунтом.
+   */
+  GOOGLE_CLIENT_IDS: z.string().default(''),
+  APPLE_CLIENT_IDS: z.string().default(''),
+
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 

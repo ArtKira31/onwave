@@ -9,6 +9,7 @@ import { CitiesModule } from './modules/cities/cities.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { EventsModule } from './modules/events/events.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { FavoritesModule } from './modules/favorites/favorites.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AuthModule } from './modules/auth/auth.module';
     CitiesModule,
     CategoriesModule,
     EventsModule,
+    FavoritesModule,
     // Дальше: MediaModule (ONW-34),
     // ModerationModule (ONW-32), ReportsModule (ONW-38).
   ],

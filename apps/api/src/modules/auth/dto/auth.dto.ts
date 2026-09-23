@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Length } from 'class-validator';
+import { IsOptional, IsString, Length, MaxLength } from 'class-validator';
 import type { User } from '@prisma/client';
 
 export class GuestSessionRequest {
@@ -11,6 +11,28 @@ export class GuestSessionRequest {
   @IsString()
   @Length(16, 128)
   deviceId!: string;
+}
+
+export class OAuthLoginRequest {
+  @ApiProperty({ description: 'id_token от SDK провайдера.' })
+  @IsString()
+  @Length(16, 4096)
+  idToken!: string;
+
+  @ApiProperty({ description: 'Тот же device-id, что в гостевой сессии — по нему гость апгрейдится.' })
+  @IsString()
+  @Length(16, 128)
+  deviceId!: string;
+
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'Apple отдаёт имя только при первом входе. Второй раз его не будет.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  fullName?: string;
 }
 
 export class RefreshRequest {

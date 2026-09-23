@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { OAuthVerifierService } from './oauth/oauth-verifier.service';
 
 /**
  * Гард регистрируется глобально: по умолчанию закрыто всё, открывается
@@ -15,7 +16,12 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 @Module({
   imports: [JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, TokenService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [
+    AuthService,
+    TokenService,
+    OAuthVerifierService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+  ],
   exports: [TokenService],
 })
 export class AuthModule {}

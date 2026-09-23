@@ -7,7 +7,13 @@ import { ErrorCode } from '../../common/errors/error-codes';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { AccessTokenPayload } from './token.service';
-import { AuthTokensDto, GuestSessionRequest, MeDto, RefreshRequest } from './dto/auth.dto';
+import {
+  AuthTokensDto,
+  GuestSessionRequest,
+  MeDto,
+  OAuthLoginRequest,
+  RefreshRequest,
+} from './dto/auth.dto';
 
 @ApiTags('auth')
 @Controller()
@@ -30,6 +36,47 @@ export class AuthController {
   @ApiOkResponse({ type: AuthTokensDto })
   async guest(@Body() body: GuestSessionRequest): Promise<AuthTokensDto> {
     const { user, ...tokens } = await this.auth.createGuestSession(body.deviceId);
+    return { ...tokens, user: MeDto.from(user) };
+  }
+
+  @Public()
+  @Post('auth/google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    operationId: 'loginWithGoogle',
+    summary: 'Вход через Google',
+    description:
+      'Аккаунт опирается на sub провайдера, не на email. Гость с тем же device-id ' +
+      'апгрейдится, а не дублируется.',
+  })
+  @ApiOkResponse({ type: AuthTokensDto })
+  async google(@Body() body: OAuthLoginRequest): Promise<AuthTokensDto> {
+    const { user, ...tokens } = await this.auth.loginWithOAuth(
+      'google',
+      body.idToken,
+      body.deviceId,
+    );
+    return { ...tokens, user: MeDto.from(user) };
+  }
+
+  @Public()
+  @Post('auth/apple')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    operationId: 'loginWithApple',
+    summary: 'Вход через Apple',
+    description:
+      'Обязателен по правилам App Store при наличии другого соц-логина. Email может ' +
+      'прийти через private relay или не прийти вовсе, имя — только при первом входе.',
+  })
+  @ApiOkResponse({ type: AuthTokensDto })
+  async apple(@Body() body: OAuthLoginRequest): Promise<AuthTokensDto> {
+    const { user, ...tokens } = await this.auth.loginWithOAuth(
+      'apple',
+      body.idToken,
+      body.deviceId,
+      body.fullName ?? null,
+    );
     return { ...tokens, user: MeDto.from(user) };
   }
 
