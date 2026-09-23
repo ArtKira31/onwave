@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { cursorFilter, decodeCursor, encodeCursor } from '../../common/pagination/cursor';
+import { BlocksService } from '../safety/blocks.service';
 import {
   EventCardDto,
   type EventCardPageDto,
@@ -25,7 +26,10 @@ export interface ListFavoritesQuery {
 
 @Injectable()
 export class FavoritesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly blocks: BlocksService,
+  ) {}
 
   /**
    * Идемпотентно: составной ключ (userId, eventId) сам защищает от дублей,
@@ -64,11 +68,15 @@ export class FavoritesService {
   async list(userId: string, query: ListFavoritesQuery): Promise<EventCardPageDto> {
     const now = new Date();
     const upcoming = query.scope === 'upcoming';
+    // Заблокировал автора — его события уходят и из избранного, даже если
+    // были отмечены раньше.
+    const hidden = await this.blocks.hiddenAuthorIds(userId);
 
     const where: Prisma.EventWhereInput = {
       favorites: { some: { userId } },
       deletedAt: null,
       startsAt: upcoming ? { gte: now } : { lt: now },
+      ...(hidden.length ? { authorId: { notIn: hidden } } : {}),
       ...(query.cursor ? cursorFilter(decodeCursor(query.cursor)) : {}),
     };
 

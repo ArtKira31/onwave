@@ -6,6 +6,7 @@ import { ErrorCode } from '../../common/errors/error-codes';
 import { CitiesService } from '../cities/cities.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { AbilityFactory, Action } from '../auth/rbac/ability.factory';
+import { BlocksService } from '../safety/blocks.service';
 import type { AccessTokenPayload } from '../auth/token.service';
 import { cursorFilter, decodeCursor, encodeCursor } from '../../common/pagination/cursor';
 import { resolvePreset } from './date-presets';
@@ -41,6 +42,7 @@ export class EventsService {
     private readonly cities: CitiesService,
     private readonly favorites: FavoritesService,
     private readonly abilities: AbilityFactory,
+    private readonly blocks: BlocksService,
   ) {}
 
   /**
@@ -64,6 +66,9 @@ export class EventsService {
     }
 
     const window = this.resolveWindow(query, city.timezone, now);
+    // ONW-39: контент обеих сторон блокировки. Список кэширован, поэтому это
+    // не джойн на каждый запрос ленты.
+    const hidden = await this.blocks.hiddenAuthorIds(viewerId);
 
     const where: Prisma.EventWhereInput = {
       cityId: city.id,
@@ -71,6 +76,7 @@ export class EventsService {
       deletedAt: null,
       // Событие без будущих сеансов в ленте не место, даже если оно опубликовано.
       startsAt: { gte: window.from, ...(window.to ? { lte: window.to } : {}) },
+      ...(hidden.length ? { authorId: { notIn: hidden } } : {}),
       ...(query.category?.length ? { category: { slug: { in: query.category } } } : {}),
       ...(query.query ? this.searchFilter(query.query) : {}),
       ...(query.cursor ? cursorFilter(decodeCursor(query.cursor)) : {}),
@@ -121,7 +127,15 @@ export class EventsService {
     // Неопубликованное видят автор и модератор; остальные получают 404, а не
     // 403: существование чужого черновика не подтверждается.
     const ability = this.abilities.forUser(viewer);
-    if (!event || !ability.can(Action.Read, { ...event, __caslSubjectType__: 'Event' })) {
+    // Прямая ссылка на событие заблокированного автора тоже должна вести в 404:
+    // иначе блокировка перестаёт работать ровно там, где ею и обходят — по ссылке.
+    const hidden = await this.blocks.hiddenAuthorIds(viewer?.sub);
+
+    if (
+      !event ||
+      hidden.includes(event.authorId) ||
+      !ability.can(Action.Read, { ...event, __caslSubjectType__: 'Event' })
+    ) {
       throw new AppException(
         ErrorCode.EVENT_NOT_FOUND,
         'Событие не найдено',
