@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Кэш и временные сборки Flutter приложения
+apps/mobile/.dart_tool/
+apps/mobile/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/.kotlin/
+apps/mobile/ios/.symlinks/
+apps/mobile/ios/Pods/
+apps/mobile/ios/Podfile.lock
