@@ -20,6 +20,11 @@ const envSchema = z.object({
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
   S3_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
+  /** База публичных ссылок: перед бакетом обычно стоит CDN. */
+  S3_PUBLIC_URL: z.string().url().optional(),
+  /** Потолок размера загрузки. Вшивается в presigned URL, а не проверяется после. */
+  MEDIA_MAX_UPLOAD_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
+  MEDIA_UPLOAD_URL_TTL_SECONDS: z.coerce.number().int().positive().default(300),
 
   JWT_ACCESS_SECRET: z.string().min(16),
   JWT_REFRESH_SECRET: z.string().min(16),
