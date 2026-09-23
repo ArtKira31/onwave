@@ -6,7 +6,9 @@
 //  3. source + externalId с уникальным индексом — заложено под будущий импорт.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // Нужна для datasource.extensions = [postgis]: без неё схема не валидируется.
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
