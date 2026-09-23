@@ -24,26 +24,25 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
-
-      flavorDimensions "default"
+    flavorDimensions += "default"
 
     productFlavors {
-        dev {
-            dimension "default"
-            applicationIdSuffix ".dev"
-            resValue "string", "app_name", "onwave DEV"
+        create("dev") {
+            dimension = "default"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "onwave DEV")
         }
-        stage {
-            dimension "default"
-            applicationIdSuffix ".stage"
-            resValue "string", "app_name", "onwave STAGE"
+        create("stage") {
+            dimension = "default"
+            applicationIdSuffix = ".stage"
+            resValue("string", "app_name", "onwave STAGE")
         }
-        prod {
-            dimension "default"
-            // Для продакшна суффикс не нужен, останется чистый com.onwave
-            resValue "string", "app_name", "onwave"
+        create("prod") {
+            dimension = "default"
+            resValue("string", "app_name", "onwave")
         }
     }
+
 
     buildTypes {
         release {
