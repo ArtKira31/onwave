@@ -1,14 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
-// В tsconfig нет esModuleInterop, поэтому `import sharp from 'sharp'`
-// компилируется в `sharp_1.default` — а его не существует, и воркер падает
-// в рантайме, пока типы молчат. Тот же дефект ранее ломал проверку токенов
-// провайдеров (ONW-16). Namespace-импорт эмитится в голый require и вызывается
-// корректно; приведение типа нужно только потому, что .d.ts описывает вызов
-// через default.
-import * as sharpModule from 'sharp';
-const sharp = sharpModule as unknown as typeof import('sharp').default;
+import sharp from 'sharp';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { S3Service } from '../../common/storage/s3.service';
 import { MEDIA_QUEUE, VARIANTS, type ResizeJobData } from './media.constants';

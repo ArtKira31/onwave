@@ -1,10 +1,6 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-// Не default-импорт: в tsconfig включён allowSyntheticDefaultImports, но не
-// esModuleInterop — default у CommonJS-модуля окажется undefined в рантайме,
-// и типы об этом промолчат.
-import * as jwt from 'jsonwebtoken';
-import type { JwtHeader, VerifyErrors } from 'jsonwebtoken';
+import jwt, { type JwtHeader, type VerifyErrors } from 'jsonwebtoken';
 import { JwksClient } from 'jwks-rsa';
 import { AppException } from '../../../common/errors/app.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
