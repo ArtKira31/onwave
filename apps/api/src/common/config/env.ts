@@ -40,6 +40,9 @@ const envSchema = z.object({
   GOOGLE_CLIENT_IDS: z.string().default(''),
   APPLE_CLIENT_IDS: z.string().default(''),
 
+  /** Сколько независимых жалоб автоматически скрывают событие до решения модератора. */
+  REPORTS_HIDE_THRESHOLD: z.coerce.number().int().positive().default(3),
+
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
