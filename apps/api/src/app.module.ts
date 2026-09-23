@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from './common/config/config.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { RedisModule } from './common/redis/redis.module';
 import { RequestIdMiddleware, REQUEST_ID_HEADER } from './common/http/request-id.middleware';
 import { HealthModule } from './modules/health/health.module';
 import { CitiesModule } from './modules/cities/cities.module';
@@ -26,6 +27,7 @@ import { EventsModule } from './modules/events/events.module';
       },
     }),
     PrismaModule,
+    RedisModule,
     HealthModule,
     CitiesModule,
     CategoriesModule,

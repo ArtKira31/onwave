@@ -45,6 +45,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const response = exception.getResponse();
+
+      // Ответ health-проб отдаём как есть. Конверт {code, message} рассчитан на
+      // мобильный клиент, а readiness читает платформа деплоя — ей нужно видеть,
+      // какая именно зависимость лежит, иначе от пробы остаётся только код 503.
+      if (isHealthCheckResult(response)) {
+        res.status(status).json(response);
+        return;
+      }
+
       if (typeof response === 'object' && response !== null && 'code' in response) {
         body = response as ErrorEnvelope;
       } else {
@@ -67,4 +76,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     res.status(status).json({ ...body, requestId });
   }
+}
+
+/** Форма ответа @nestjs/terminus: {status, info, error, details}. */
+function isHealthCheckResult(response: unknown): boolean {
+  return (
+    typeof response === 'object' &&
+    response !== null &&
+    'status' in response &&
+    'details' in response
+  );
 }

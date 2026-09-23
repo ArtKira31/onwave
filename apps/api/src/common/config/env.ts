@@ -8,6 +8,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   APP_VERSION: z.string().default('0.0.0'),
+  /** Проставляется в CI при сборке: по нему видно, что крутится на стенде. */
+  GIT_SHA: z.string().default('unknown'),
 
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
