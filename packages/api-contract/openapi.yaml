@@ -1072,10 +1072,13 @@ components:
         categorySlug: { type: string }
         cityId: { type: string, format: uuid }
         venueId: { type: [string, 'null'], format: uuid }
-        rawAddress: { type: string, maxLength: 300 }
-        placeId:
+        rawAddress:
           type: string
-          description: Из `/geo/autocomplete`. Предпочтительнее свободного адреса.
+          maxLength: 300
+          description: |
+            Свободный адрес. Разрешение адреса в площадку и координаты через
+            `placeId` появится вместе с геокодингом (ONW-36) — пока поле
+            в запрос не принимается, чтобы схема не обещала несуществующего.
         sessions:
           type: array
           maxItems: 50

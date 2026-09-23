@@ -5,6 +5,8 @@ import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-codes';
 import { CitiesService } from '../cities/cities.service';
 import { FavoritesService } from '../favorites/favorites.service';
+import { AbilityFactory, Action } from '../auth/rbac/ability.factory';
+import type { AccessTokenPayload } from '../auth/token.service';
 import { cursorFilter, decodeCursor, encodeCursor } from '../../common/pagination/cursor';
 import { resolvePreset } from './date-presets';
 import type { ListEventsQuery } from './dto/list-events.query';
@@ -38,6 +40,7 @@ export class EventsService {
     private readonly prisma: PrismaService,
     private readonly cities: CitiesService,
     private readonly favorites: FavoritesService,
+    private readonly abilities: AbilityFactory,
   ) {}
 
   /**
@@ -109,13 +112,16 @@ export class EventsService {
    * подтверждается. Разграничение автор/модератор появится вместе с ONW-25 —
    * пока доступ есть только к published.
    */
-  async getById(id: string, viewerId?: string): Promise<EventDetailDto> {
+  async getById(id: string, viewer?: AccessTokenPayload): Promise<EventDetailDto> {
     const event = (await this.prisma.event.findFirst({
-      where: { id, status: 'published', deletedAt: null },
+      where: { id, deletedAt: null },
       include: DETAIL_RELATIONS,
     })) as EventWithDetailRelations | null;
 
-    if (!event) {
+    // Неопубликованное видят автор и модератор; остальные получают 404, а не
+    // 403: существование чужого черновика не подтверждается.
+    const ability = this.abilities.forUser(viewer);
+    if (!event || !ability.can(Action.Read, { ...event, __caslSubjectType__: 'Event' })) {
       throw new AppException(
         ErrorCode.EVENT_NOT_FOUND,
         'Событие не найдено',
@@ -123,8 +129,47 @@ export class EventsService {
       );
     }
 
-    const favorited = await this.favorites.favoriteIds(viewerId, [event.id]);
-    return EventDetailDto.from(event, new Date(), viewerId, favorited.has(event.id));
+    const favorited = await this.favorites.favoriteIds(viewer?.sub, [event.id]);
+    return EventDetailDto.from(event, new Date(), viewer?.sub, favorited.has(event.id));
+  }
+
+  /**
+   * «Мои события» (ONW-58): автор должен понимать, почему его событие не видно
+   * в ленте, поэтому статус и причина отказа приходят здесь, а не только в ленте.
+   */
+  async listMine(
+    userId: string,
+    query: { cursor?: string; limit: number; status?: string[] },
+  ): Promise<EventCardPageDto> {
+    const where: Prisma.EventWhereInput = {
+      authorId: userId,
+      deletedAt: null,
+      ...(query.status?.length ? { status: { in: query.status as never } } : {}),
+      ...(query.cursor ? cursorFilter(decodeCursor(query.cursor)) : {}),
+    };
+
+    const rows = (await this.prisma.event.findMany({
+      where,
+      include: CARD_RELATIONS,
+      orderBy: [{ startsAt: 'desc' }, { id: 'asc' }],
+      take: query.limit + 1,
+    })) as EventWithCardRelations[];
+
+    const hasMore = rows.length > query.limit;
+    const items = hasMore ? rows.slice(0, query.limit) : rows;
+    const last = items.at(-1);
+    const favorited = await this.favorites.favoriteIds(userId, items.map((e) => e.id));
+
+    return {
+      items: items.map((event) => ({
+        ...EventCardDto.from(event, favorited.has(event.id)),
+        rejectionReason: event.rejectionReason,
+      })),
+      nextCursor:
+        hasMore && last?.startsAt
+          ? encodeCursor({ startsAt: last.startsAt.toISOString(), id: last.id })
+          : null,
+    };
   }
 
   private resolveWindow(

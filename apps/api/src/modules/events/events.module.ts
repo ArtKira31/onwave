@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { CitiesModule } from '../cities/cities.module';
 import { FavoritesModule } from '../favorites/favorites.module';
-import { EventsController } from './events.controller';
+import { EventsController, MyEventsController } from './events.controller';
 import { EventsService } from './events.service';
+import { EventWritesService } from './event-writes.service';
+import { EventStatusService } from './event-status.service';
 
 @Module({
   imports: [CitiesModule, FavoritesModule],
-  controllers: [EventsController],
-  providers: [EventsService],
+  controllers: [EventsController, MyEventsController],
+  providers: [EventsService, EventWritesService, EventStatusService],
 })
 export class EventsModule {}

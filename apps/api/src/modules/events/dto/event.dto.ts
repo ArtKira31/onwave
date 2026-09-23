@@ -97,7 +97,8 @@ export class EventCardDto {
       categorySlug: event.category?.slug ?? null,
       venueName: event.venue?.name ?? null,
       cityId: event.cityId,
-      priceFrom: null,
+      // Decimal в базе, число наружу: сериализовать Decimal.js в JSON нельзя.
+      priceFrom: event.priceFrom === null ? null : Number(event.priceFrom),
       isFavorite,
     };
   }
@@ -152,7 +153,7 @@ export class EventDetailDto {
       sessions: event.sessions.map((s) => EventSessionDto.from(s, now)),
       cover: MediaVariantsDto.from(event.cover),
       ticketUrl: event.ticketUrl,
-      priceFrom: null,
+      priceFrom: event.priceFrom === null ? null : Number(event.priceFrom),
       isFavorite,
       // Клиент по нему решает, показывать ли кнопку редактирования. Реальные
       // права проверяются на сервере при самой правке (ONW-25).
