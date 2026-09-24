@@ -34,8 +34,31 @@ jobs:
 
       - if: steps.probe.outputs.ready == 'true'
         working-directory: apps/mobile
+        run: flutter pub get
+
+      # ONW-42: контракт — источник правды. Если схему поменяли, а клиент не
+      # перегенерировали, сборка должна падать: иначе мобилка тихо разъедется
+      # с бэкендом и выяснится это на устройстве.
+      #
+      # Шаг включается, когда в репозитории появится сгенерированный клиент.
+      - name: Клиент не отстал от контракта
+        if: steps.probe.outputs.ready == 'true'
+        working-directory: apps/mobile
         run: |
-          flutter pub get
+          if [ ! -d lib/api ]; then
+            echo "lib/api ещё нет — клиент генерируется в ONW-42, проверка пропущена"
+            exit 0
+          fi
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+          if ! git diff --exit-code -- lib/api; then
+            echo "::error::Сгенерированный клиент отстал от openapi.yaml. Перегенерируйте и закоммитьте."
+            exit 1
+          fi
+
+      - if: steps.probe.outputs.ready == 'true'
+        working-directory: apps/mobile
+        run: |
           flutter analyze
           flutter test
           flutter build apk --debug --flavor dev

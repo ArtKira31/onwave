@@ -18,12 +18,23 @@ dependencies:
     sdk: flutter
   intl: ^0.20.3
 
+  # Сетевой слой и сгенерированный клиент (ONW-42).
+  # Руками здесь ничего не пишется: модели и методы берутся из OpenAPI.
+  dio: ^5.7.0
+  retrofit: ^4.4.1
+  json_annotation: ^4.9.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   build_runner: ^2.16.1
   go_router_builder: ^4.5.0
+
+  # Кодоген клиента (ONW-42)
+  swagger_parser: ^1.44.3
+  retrofit_generator: ^9.1.5
+  json_serializable: ^6.8.0
 
 flutter:
   uses-material-design: true

@@ -1,0 +1,32 @@
+# Генерация Dart-клиента из контракта (ONW-42).
+#
+#   dart run swagger_parser
+#   dart run build_runner build --delete-conflicting-outputs
+#
+# Контракт — источник правды: править клиент руками нельзя, правки начинаются
+# в packages/api-contract/openapi.yaml. CI проверяет, что сгенерированное
+# соответствует схеме.
+swagger_parser:
+  schema_path: ../../packages/api-contract/openapi.yaml
+  output_directory: lib/api
+  language: dart
+
+  # Retrofit поверх dio — то, на чём строятся интерсепторы авторизации (ONW-47).
+  # json_serializable, а не freezed: это DTO транспортного слоя, им не нужны
+  # ни copyWith, ни юнионы, а build_runner на них тратит заметно меньше времени.
+  # Freezed остаётся для моделей состояния в своём слое.
+  json_serializer: json_serializable
+
+  # Клиенты раскладываются по тегам схемы: events, auth, media и так далее.
+  put_clients_in_folder: true
+  put_in_folder: true
+
+  # Незнакомое значение enum не роняет приложение: бэкенд может добавить новый
+  # статус события или причину жалобы раньше, чем выйдет обновление в сторах.
+  unknown_enum_value: true
+  enums_to_json: true
+
+  # required-поля схемы становятся non-nullable в Dart.
+  required_by_default: false
+
+  name: onwave_api
