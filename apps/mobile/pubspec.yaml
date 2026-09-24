@@ -21,8 +21,8 @@ dependencies:
   # Сетевой слой и сгенерированный клиент (ONW-42).
   # Руками здесь ничего не пишется: модели и методы берутся из OpenAPI.
   dio: ^5.7.0
-  retrofit: ^4.4.1
-  json_annotation: ^4.9.0
+  retrofit: ^4.10.0
+  json_annotation: ^4.12.0
 
 dev_dependencies:
   flutter_test:
@@ -33,8 +33,10 @@ dev_dependencies:
 
   # Кодоген клиента (ONW-42)
   swagger_parser: ^1.44.3
-  retrofit_generator: ^9.1.5
-  json_serializable: ^6.8.0
+  # 10.x, а не 9.x: девятая тянет source_gen <3, а go_router_builder требует
+  # >=3.1 — версии не сходятся. Десятая работает на source_gen ^4.
+  retrofit_generator: ^10.2.11
+  json_serializable: ^6.14.1
 
 flutter:
   uses-material-design: true
