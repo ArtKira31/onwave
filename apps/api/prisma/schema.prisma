@@ -6,7 +6,9 @@
 //  3. source + externalId с уникальным индексом — заложено под будущий импорт.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // Нужна для datasource.extensions = [postgis]: без неё схема не валидируется.
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
@@ -159,6 +161,10 @@ model Event {
   description String?
   /// Кнопка «Купить билет» — только внешняя ссылка, оплаты внутри нет.
   ticketUrl   String?
+  /// Цена «от», только для показа в карточке. Оплаты внутри приложения нет,
+  /// поэтому это витринное поле, а не расчётное — но Decimal, а не Float:
+  /// деньги во float — способ однажды показать 1499.9999999.
+  priceFrom   Decimal?    @db.Decimal(10, 2)
   coverId     String?
   /// Денормализованное время ближайшего сеанса: по нему сортируется лента.
   startsAt    DateTime?   @db.Timestamptz

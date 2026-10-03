@@ -32,7 +32,9 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio:latest
+    # Образы MinIO живут в собственном реестре: с Docker Hub minio/minio
+    # больше не тянется (pull access denied).
+    image: quay.io/minio/minio:latest
     container_name: onwave-minio
     command: server /data --console-address ":9001"
     environment:
@@ -51,7 +53,7 @@ services:
 
   # Создаёт бакет при первом запуске, затем завершается.
   minio-init:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     depends_on:
       minio:
         condition: service_healthy

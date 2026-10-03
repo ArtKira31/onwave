@@ -1,4 +1,9 @@
-import { ArgumentsHost, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  HttpStatus,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 import { AppException } from './app.exception';
 import { ErrorCode } from './error-codes';
@@ -43,5 +48,26 @@ describe('AllExceptionsFilter', () => {
     expect(json).toHaveBeenCalledWith(
       expect.objectContaining({ code: ErrorCode.INTERNAL, message: 'Внутренняя ошибка сервера' }),
     );
+  });
+
+  it('пробрасывает ответ health-пробы нетронутым', () => {
+    // Конверт {code, message} рассчитан на мобильный клиент. Readiness читает
+    // платформа деплоя: если завернуть его в конверт, из ответа пропадёт то,
+    // ради чего проба существует — какая именно зависимость лежит.
+    const { host, json, status } = makeHost();
+    const healthResult = {
+      status: 'error',
+      info: { database: { status: 'up' } },
+      error: { redis: { status: 'down', message: 'Redis не отвечает на PING' } },
+      details: { database: { status: 'up' }, redis: { status: 'down' } },
+    };
+
+    new AllExceptionsFilter().catch(
+      new ServiceUnavailableException(healthResult),
+      host,
+    );
+
+    expect(status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(json).toHaveBeenCalledWith(healthResult);
   });
 });

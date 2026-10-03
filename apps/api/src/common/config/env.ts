@@ -8,6 +8,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   APP_VERSION: z.string().default('0.0.0'),
+  /** Проставляется в CI при сборке: по нему видно, что крутится на стенде. */
+  GIT_SHA: z.string().default('unknown'),
 
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
@@ -18,11 +20,39 @@ const envSchema = z.object({
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
   S3_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
+  /** База публичных ссылок: перед бакетом обычно стоит CDN. */
+  S3_PUBLIC_URL: z.string().url().optional(),
+  /** Потолок размера загрузки. Вшивается в presigned URL, а не проверяется после. */
+  MEDIA_MAX_UPLOAD_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
+  MEDIA_UPLOAD_URL_TTL_SECONDS: z.coerce.number().int().positive().default(300),
 
   JWT_ACCESS_SECRET: z.string().min(16),
   JWT_REFRESH_SECRET: z.string().min(16),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('30d'),
+
+  /**
+   * Допустимые audience провайдеров — по одному client id на платформу,
+   * через запятую. Токен, выписанный для чужого приложения, обязан
+   * отбиваться: иначе любой, у кого есть Google-клиент, входит в Onwave
+   * под чужим аккаунтом.
+   */
+  GOOGLE_CLIENT_IDS: z.string().default(''),
+  APPLE_CLIENT_IDS: z.string().default(''),
+
+  /** Сколько независимых жалоб автоматически скрывают событие до решения модератора. */
+  REPORTS_HIDE_THRESHOLD: z.coerce.number().int().positive().default(3),
+
+  /**
+   * Лимиты (ONW-33). Меняются конфигом, а не релизом: подкрутить порог во
+   * время спам-волны нужно за минуты, а не за цикл выката.
+   */
+  RATE_LIMIT_SUBMITS_PER_DAY: z.coerce.number().int().positive().default(3),
+  RATE_LIMIT_SUBMITS_PER_DAY_ORGANIZER: z.coerce.number().int().positive().default(30),
+  RATE_LIMIT_UPLOADS_PER_DAY: z.coerce.number().int().positive().default(30),
+  RATE_LIMIT_UPLOAD_BYTES_PER_DAY: z.coerce.number().int().positive().default(200 * 1024 * 1024),
+  RATE_LIMIT_REPORTS_PER_DAY: z.coerce.number().int().positive().default(20),
+  RATE_LIMIT_GUEST_SESSIONS_PER_HOUR: z.coerce.number().int().positive().default(20),
 
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),

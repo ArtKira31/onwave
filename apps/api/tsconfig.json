@@ -6,6 +6,11 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    // Без него default-импорт CommonJS-модуля компилируется в `module_1.default`,
+    // а его у большинства таких модулей нет: в рантайме undefined, при этом
+    // allowSyntheticDefaultImports заставляет TypeScript молчать. Эта пара
+    // флагов без esModuleInterop дважды ломала рабочий код (ONW-23, ONW-35).
+    "esModuleInterop": true,
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
