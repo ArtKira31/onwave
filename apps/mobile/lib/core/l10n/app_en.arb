@@ -13,8 +13,41 @@
     }
   },
   "retry": "Retry",
-"errorNetworkTitle": "No internet connection",
-"errorNetworkSubtitle": "Check your connection and try again.",
-"errorGenericTitle": "Something went wrong",
-"errorGenericSubtitle": "Couldn't load the data. Please try again."
+  "errorNetworkTitle": "No internet connection",
+  "errorNetworkSubtitle": "Check your connection and try again.",
+  "errorGenericTitle": "Something went wrong",
+  "errorGenericSubtitle": "Couldn't load the data. Please try again.",
+  "feedEmptyTitle": "No events yet",
+  "feedEmptySubtitle": "There are no events in this city for the current filter. Check back later or change the filter.",
+  "feedErrorTitle": "Couldn't load the feed",
+  "feedErrorSubtitle": "Check your internet connection and try again.",
+  "refresh": "Refresh",
+  "offlineBanner": "No internet connection",
+  "staleBanner": "Data may be outdated · updated {time}",
+  "@staleBanner": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "feedRefreshFailed": "Couldn't refresh the feed",
+  "feedLoadMoreFailed": "Couldn't load more",
+  "categoryConcerts": "Concerts",
+  "categoryTheatre": "Theatre",
+  "categoryExhibitions": "Exhibitions",
+  "categorySport": "Sport",
+  "categoryParties": "Parties",
+  "categoryKids": "Kids",
+  "categoryEducation": "Education",
+  "categoryOther": "Other",
+  "moreDates": "{count, plural, one{+{count} more date} other{+{count} more dates}}",
+  "@moreDates": {
+    "description": "Extra event dates",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

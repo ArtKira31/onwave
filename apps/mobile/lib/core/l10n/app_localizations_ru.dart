@@ -44,4 +44,71 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get errorGenericSubtitle =>
       'Не удалось загрузить данные. Попробуйте ещё раз.';
+
+  @override
+  String get feedEmptyTitle => 'Событий пока нет';
+
+  @override
+  String get feedEmptySubtitle =>
+      'В этом городе нет событий для выбранного фильтра. Загляните позже или измените фильтр.';
+
+  @override
+  String get feedErrorTitle => 'Не удалось загрузить ленту';
+
+  @override
+  String get feedErrorSubtitle =>
+      'Проверьте подключение к интернету и попробуйте ещё раз.';
+
+  @override
+  String get refresh => 'Обновить';
+
+  @override
+  String get offlineBanner => 'Нет подключения к сети';
+
+  @override
+  String staleBanner(String time) {
+    return 'Данные устарели · обновлено $time';
+  }
+
+  @override
+  String get feedRefreshFailed => 'Не удалось обновить ленту';
+
+  @override
+  String get feedLoadMoreFailed => 'Не удалось загрузить ещё';
+
+  @override
+  String get categoryConcerts => 'Концерты';
+
+  @override
+  String get categoryTheatre => 'Театр';
+
+  @override
+  String get categoryExhibitions => 'Выставки';
+
+  @override
+  String get categorySport => 'Спорт';
+
+  @override
+  String get categoryParties => 'Вечеринки';
+
+  @override
+  String get categoryKids => 'Детям';
+
+  @override
+  String get categoryEducation => 'Образование';
+
+  @override
+  String get categoryOther => 'Другое';
+
+  @override
+  String moreDates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дат',
+      few: '$count даты',
+      one: '$count дата',
+    );
+    return 'и ещё $_temp0';
+  }
 }

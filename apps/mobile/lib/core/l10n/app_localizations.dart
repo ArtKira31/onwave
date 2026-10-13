@@ -151,6 +151,114 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось загрузить данные. Попробуйте ещё раз.'**
   String get errorGenericSubtitle;
+
+  /// No description provided for @feedEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Событий пока нет'**
+  String get feedEmptyTitle;
+
+  /// No description provided for @feedEmptySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этом городе нет событий для выбранного фильтра. Загляните позже или измените фильтр.'**
+  String get feedEmptySubtitle;
+
+  /// No description provided for @feedErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить ленту'**
+  String get feedErrorTitle;
+
+  /// No description provided for @feedErrorSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте подключение к интернету и попробуйте ещё раз.'**
+  String get feedErrorSubtitle;
+
+  /// Кнопка обновления
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить'**
+  String get refresh;
+
+  /// Офлайн-баннер
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет подключения к сети'**
+  String get offlineBanner;
+
+  /// Пометка, что показан кэш
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные устарели · обновлено {time}'**
+  String staleBanner(String time);
+
+  /// Снекбар при неудачном pull-to-refresh
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось обновить ленту'**
+  String get feedRefreshFailed;
+
+  /// Ошибка подгрузки следующей страницы
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить ещё'**
+  String get feedLoadMoreFailed;
+
+  /// No description provided for @categoryConcerts.
+  ///
+  /// In ru, this message translates to:
+  /// **'Концерты'**
+  String get categoryConcerts;
+
+  /// No description provided for @categoryTheatre.
+  ///
+  /// In ru, this message translates to:
+  /// **'Театр'**
+  String get categoryTheatre;
+
+  /// No description provided for @categoryExhibitions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выставки'**
+  String get categoryExhibitions;
+
+  /// No description provided for @categorySport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спорт'**
+  String get categorySport;
+
+  /// No description provided for @categoryParties.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вечеринки'**
+  String get categoryParties;
+
+  /// No description provided for @categoryKids.
+  ///
+  /// In ru, this message translates to:
+  /// **'Детям'**
+  String get categoryKids;
+
+  /// No description provided for @categoryEducation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образование'**
+  String get categoryEducation;
+
+  /// No description provided for @categoryOther.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другое'**
+  String get categoryOther;
+
+  /// Дополнительные даты события
+  ///
+  /// In ru, this message translates to:
+  /// **'и ещё {count, plural, one{{count} дата} few{{count} даты} other{{count} дат}}'**
+  String moreDates(int count);
 }
 
 class _AppLocalizationsDelegate
