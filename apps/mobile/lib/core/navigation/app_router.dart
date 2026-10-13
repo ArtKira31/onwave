@@ -6,6 +6,7 @@ import 'package:mobile/features/debug_design_system_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/city/providers/city_provider.dart';
 import '../../features/dummy_screens.dart';
+import 'package:mobile/features/feed/presentation/feed_screen.dart';
 
 import 'scaffold_with_navbar.dart';
 

@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/l10n/app_localizations.dart';
 
-import 'package:mobile/core/navigation/app_router.dart';
 import 'auth/providers/auth_provider.dart';
 import 'city/providers/city_provider.dart';
-import '../core/utils/date_formatter.dart';
 
 class OnboardingScreen extends ConsumerWidget {
   const OnboardingScreen({super.key});
@@ -17,7 +15,7 @@ class OnboardingScreen extends ConsumerWidget {
     return Scaffold(
       body: Center(
         child: ElevatedButton(
-          onPressed: () => ref.read(cityProvider.notifier).selectCity('Москва'),
+          onPressed: () => ref.read(cityProvider.notifier).selectCity('tbilisi'),
           child: Text(l10n.selectCity),
         ),
       ),
@@ -43,47 +41,6 @@ class LoginScreen extends ConsumerWidget {
           },
           child: const Text('Войти в аккаунт'),
         ),
-      ),
-    );
-  }
-}
-
-class FeedScreen extends StatelessWidget {
-  const FeedScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final currentLocale = Localizations.localeOf(context).toString();
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.feedTitle)),
-      body: ListView.builder(
-        key: const PageStorageKey(
-          'feed_list_scroll',
-        ), // Сохраняет позицию скролла
-        itemCount: 50,
-        itemBuilder: (context, index) {
-          // Симулируем дату события (каждое следующее событие на 1 день дальше в будущем)
-          final eventDate = DateTime.now().add(Duration(days: index + 1));
-
-          return ListTile(
-            title: Text('${l10n.feedTitle} #$index'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Плюрализация дней по ICU (1 день, 2 дня, 5 дней)
-                Text(l10n.daysRemaining(index + 1)),
-                // 2. Форматирование даты через intl под текущий язык смартфона
-                Text(
-                  AppDateFormatter.formatEventDate(eventDate, currentLocale),
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-              ],
-            ),
-            onTap: () => EventDetailRoute(id: '$index').go(context),
-          );
-        },
       ),
     );
   }

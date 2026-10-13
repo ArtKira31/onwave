@@ -43,4 +43,70 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorGenericSubtitle =>
       'Couldn\'t load the data. Please try again.';
+
+  @override
+  String get feedEmptyTitle => 'No events yet';
+
+  @override
+  String get feedEmptySubtitle =>
+      'There are no events in this city for the current filter. Check back later or change the filter.';
+
+  @override
+  String get feedErrorTitle => 'Couldn\'t load the feed';
+
+  @override
+  String get feedErrorSubtitle =>
+      'Check your internet connection and try again.';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get offlineBanner => 'No internet connection';
+
+  @override
+  String staleBanner(String time) {
+    return 'Data may be outdated · updated $time';
+  }
+
+  @override
+  String get feedRefreshFailed => 'Couldn\'t refresh the feed';
+
+  @override
+  String get feedLoadMoreFailed => 'Couldn\'t load more';
+
+  @override
+  String get categoryConcerts => 'Concerts';
+
+  @override
+  String get categoryTheatre => 'Theatre';
+
+  @override
+  String get categoryExhibitions => 'Exhibitions';
+
+  @override
+  String get categorySport => 'Sport';
+
+  @override
+  String get categoryParties => 'Parties';
+
+  @override
+  String get categoryKids => 'Kids';
+
+  @override
+  String get categoryEducation => 'Education';
+
+  @override
+  String get categoryOther => 'Other';
+
+  @override
+  String moreDates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count more dates',
+      one: '+$count more date',
+    );
+    return '$_temp0';
+  }
 }
