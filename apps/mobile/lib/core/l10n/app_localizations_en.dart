@@ -27,4 +27,20 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get errorNetworkTitle => 'No internet connection';
+
+  @override
+  String get errorNetworkSubtitle => 'Check your connection and try again.';
+
+  @override
+  String get errorGenericTitle => 'Something went wrong';
+
+  @override
+  String get errorGenericSubtitle =>
+      'Couldn\'t load the data. Please try again.';
 }

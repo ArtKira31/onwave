@@ -121,6 +121,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'{count, plural, one{{count} день} few{{count} дня} other{{count} дней}}'**
   String daysRemaining(int count);
+
+  /// Кнопка повтора
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get retry;
+
+  /// No description provided for @errorNetworkTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет подключения к сети'**
+  String get errorNetworkTitle;
+
+  /// No description provided for @errorNetworkSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте интернет и попробуйте ещё раз.'**
+  String get errorNetworkSubtitle;
+
+  /// No description provided for @errorGenericTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что-то пошло не так'**
+  String get errorGenericTitle;
+
+  /// No description provided for @errorGenericSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить данные. Попробуйте ещё раз.'**
+  String get errorGenericSubtitle;
 }
 
 class _AppLocalizationsDelegate
