@@ -28,4 +28,20 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get retry => 'Повторить';
+
+  @override
+  String get errorNetworkTitle => 'Нет подключения к сети';
+
+  @override
+  String get errorNetworkSubtitle => 'Проверьте интернет и попробуйте ещё раз.';
+
+  @override
+  String get errorGenericTitle => 'Что-то пошло не так';
+
+  @override
+  String get errorGenericSubtitle =>
+      'Не удалось загрузить данные. Попробуйте ещё раз.';
 }

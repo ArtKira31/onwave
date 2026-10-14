@@ -11,5 +11,10 @@
         "type": "int"
       }
     }
-  }
+  },
+  "retry": "Retry",
+"errorNetworkTitle": "No internet connection",
+"errorNetworkSubtitle": "Check your connection and try again.",
+"errorGenericTitle": "Something went wrong",
+"errorGenericSubtitle": "Couldn't load the data. Please try again."
 }
