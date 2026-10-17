@@ -6,6 +6,7 @@ import 'package:mobile/api/models/event_card.dart';
 import 'package:mobile/api/models/preset.dart';
 import 'package:mobile/core/network/api_providers.dart';
 import 'package:mobile/features/feed/domain/feed_models.dart';
+import 'package:mobile/core/network/api_guard.dart';
 
 abstract interface class EventsRepository {
   /// `GET /events`. [city] — slug или id города (так в контракте).
@@ -70,13 +71,15 @@ class ApiEventsRepository implements EventsRepository {
 
   @override
   Future<EventsPage> fetchPage({required String city, required FeedFilter filter, String? cursor, int limit = 20}) async {
-    final page = await _client.listEvents(
-      city: city,
-      limit: limit,
-      cursor: cursor,
-      category: filter.categories.isEmpty ? null : filter.categories,
-      preset: _preset(filter.preset),
-      query: (filter.query == null || filter.query!.isEmpty) ? null : filter.query,
+    final page = await guardApi(
+      () => _client.listEvents(
+        city: city,
+        limit: limit,
+        cursor: cursor,
+        category: filter.categories.isEmpty ? null : filter.categories,
+        preset: _preset(filter.preset),
+        query: (filter.query == null || filter.query!.isEmpty) ? null : filter.query,
+      ),
     );
     return EventsPage(items: page.items.map(_toFeedEvent).toList(), nextCursor: page.nextCursor);
   }
