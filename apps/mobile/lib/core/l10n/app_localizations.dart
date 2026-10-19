@@ -259,6 +259,156 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'и ещё {count, plural, one{{count} дата} few{{count} даты} other{{count} дат}}'**
   String moreDates(int count);
+
+  /// No description provided for @onboardingCityTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите город'**
+  String get onboardingCityTitle;
+
+  /// No description provided for @onboardingCitySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покажем события рядом с вами. Регистрация не нужна.'**
+  String get onboardingCitySubtitle;
+
+  /// No description provided for @citySearchHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск города'**
+  String get citySearchHint;
+
+  /// No description provided for @cityDetectAuto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Определить автоматически'**
+  String get cityDetectAuto;
+
+  /// No description provided for @cityDetecting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Определяем…'**
+  String get cityDetecting;
+
+  /// No description provided for @cityDetectExplanation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найдём ближайший к вам город. Положение запрашивается один раз, только для этого, и никуда не отправляется.'**
+  String get cityDetectExplanation;
+
+  /// No description provided for @cityDetectNoNearby.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рядом с вами пока нет доступных городов. Выберите город из списка.'**
+  String get cityDetectNoNearby;
+
+  /// No description provided for @cityDetectServicesOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Геолокация выключена на устройстве. Включите её или выберите город из списка.'**
+  String get cityDetectServicesOff;
+
+  /// No description provided for @cityDetectDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет доступа к геолокации. Ничего страшного: выберите город из списка.'**
+  String get cityDetectDenied;
+
+  /// No description provided for @cityDetectDeniedForever.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступ к геолокации запрещён в настройках. Выберите город из списка или разрешите доступ.'**
+  String get cityDetectDeniedForever;
+
+  /// No description provided for @cityDetectOpenSettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть настройки'**
+  String get cityDetectOpenSettings;
+
+  /// No description provided for @cityDetectUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось определить местоположение. Выберите город из списка.'**
+  String get cityDetectUnavailable;
+
+  /// No description provided for @citySearchEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Город не найден'**
+  String get citySearchEmptyTitle;
+
+  /// No description provided for @citySearchEmptySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте название или выберите город из списка.'**
+  String get citySearchEmptySubtitle;
+
+  /// No description provided for @cityListErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить города'**
+  String get cityListErrorTitle;
+
+  /// Выбранный город на втором экране онбординга
+  ///
+  /// In ru, this message translates to:
+  /// **'Город: {city}'**
+  String onboardingCityChosen(String city);
+
+  /// No description provided for @onboardingValueTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всё интересное в вашем городе'**
+  String get onboardingValueTitle;
+
+  /// No description provided for @onboardingValue1.
+  ///
+  /// In ru, this message translates to:
+  /// **'Концерты, театр, выставки и вечеринки в одной ленте'**
+  String get onboardingValue1;
+
+  /// No description provided for @onboardingValue2.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ближайшие даты и площадки без лишнего поиска'**
+  String get onboardingValue2;
+
+  /// No description provided for @onboardingValue3.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняйте понравившееся в избранное'**
+  String get onboardingValue3;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In ru, this message translates to:
+  /// **'В ленту'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get onboardingSkip;
+
+  /// No description provided for @citySelectTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбор города'**
+  String get citySelectTitle;
+
+  /// No description provided for @cityChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сменить город'**
+  String get cityChange;
+
+  /// No description provided for @profileCity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Город'**
+  String get profileCity;
 }
 
 class _AppLocalizationsDelegate
