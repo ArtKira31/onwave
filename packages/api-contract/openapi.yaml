@@ -339,9 +339,9 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
 
   /events/{id}:
-    parameters:
-      - $ref: '#/components/parameters/EventId'
     get:
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       tags: [events]
       operationId: getEvent
       summary: Карточка события
@@ -358,6 +358,8 @@ paths:
               schema: { $ref: '#/components/schemas/EventDetail' }
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       tags: [events]
       operationId: updateEvent
       summary: Обновить черновик
@@ -381,9 +383,9 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
 
   /events/{id}/submit:
-    parameters:
-      - $ref: '#/components/parameters/EventId'
     post:
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       tags: [events]
       operationId: submitEvent
       summary: Отправить событие на модерацию
@@ -403,9 +405,9 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
 
   /events/{id}/favorite:
-    parameters:
-      - $ref: '#/components/parameters/EventId'
     put:
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       tags: [favorites]
       operationId: addFavorite
       summary: Добавить в избранное
@@ -415,6 +417,8 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
     delete:
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       tags: [favorites]
       operationId: removeFavorite
       summary: Убрать из избранного
@@ -519,12 +523,12 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
 
   /media/{id}/complete:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
     post:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
       tags: [media]
       operationId: completeUpload
       summary: Подтвердить загрузку
@@ -616,12 +620,12 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
 
   /users/{id}/block:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
     post:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
       tags: [safety]
       operationId: blockUser
       summary: Заблокировать пользователя
@@ -633,6 +637,11 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
     delete:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
       tags: [safety]
       operationId: unblockUser
       summary: Снять блокировку
@@ -687,9 +696,9 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
 
   /moderation/events/{id}/approve:
-    parameters:
-      - $ref: '#/components/parameters/EventId'
     post:
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       tags: [moderation]
       operationId: approveEvent
       summary: Одобрить событие
@@ -704,9 +713,9 @@ paths:
         '409': { $ref: '#/components/responses/InvalidStateTransition' }
 
   /moderation/events/{id}/reject:
-    parameters:
-      - $ref: '#/components/parameters/EventId'
     post:
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       tags: [moderation]
       operationId: rejectEvent
       summary: Отклонить событие
