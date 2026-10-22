@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/app_sizes.dart';
+import 'debug_components_catalog.dart';
 
 class DebugDesignSystemScreen extends StatelessWidget {
   const DebugDesignSystemScreen({super.key});
@@ -11,10 +12,7 @@ class DebugDesignSystemScreen extends StatelessWidget {
     final typography = context.typography;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Design System Catalog'),
-        backgroundColor: colors.surface,
-      ),
+      appBar: AppBar(title: const Text('Design System Catalog'), backgroundColor: colors.surface),
       body: ListView(
         padding: const EdgeInsets.all(AppInsets.lg),
         children: [
@@ -23,16 +21,8 @@ class DebugDesignSystemScreen extends StatelessWidget {
           _buildColorCard('Brand Color', colors.brand, colors.textPrimary),
           _buildColorCard('Background', colors.background, colors.textPrimary),
           _buildColorCard('Surface', colors.surface, colors.textPrimary),
-          _buildColorCard(
-            'Text Primary',
-            colors.textPrimary,
-            colors.background,
-          ),
-          _buildColorCard(
-            'Text Secondary',
-            colors.textSecondary,
-            colors.background,
-          ),
+          _buildColorCard('Text Primary', colors.textPrimary, colors.background),
+          _buildColorCard('Text Secondary', colors.textSecondary, colors.background),
 
           const SizedBox(height: AppInsets.xl),
 
@@ -42,10 +32,7 @@ class DebugDesignSystemScreen extends StatelessWidget {
           const SizedBox(height: AppInsets.xs),
           Text('Heading 2 Text Style', style: typography.h2),
           const SizedBox(height: AppInsets.xs),
-          Text(
-            'Body Regular Text Style — Поддержка системного скейлинга.',
-            style: typography.body,
-          ),
+          Text('Body Regular Text Style — Поддержка системного скейлинга.', style: typography.body),
           const SizedBox(height: AppInsets.xs),
           Text('Caption Text Style', style: typography.caption),
 
@@ -55,16 +42,11 @@ class DebugDesignSystemScreen extends StatelessWidget {
           const SizedBox(height: AppInsets.sm),
           Container(
             padding: const EdgeInsets.all(AppInsets.md),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: AppRadius.borderMd,
-              boxShadow: context.shadows,
-            ),
-            child: Text(
-              'Карточка с AppRadius.borderMd и адаптивной тенью',
-              style: typography.body,
-            ),
+            decoration: BoxDecoration(color: colors.surface, borderRadius: AppRadius.borderMd, boxShadow: context.shadows),
+            child: Text('Карточка с AppRadius.borderMd и адаптивной тенью', style: typography.body),
           ),
+          const SizedBox(height: AppInsets.xl),
+          const ComponentsCatalog(),
         ],
       ),
     );
@@ -82,10 +64,7 @@ class DebugDesignSystemScreen extends StatelessWidget {
             name,
             style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
           ),
-          Text(
-            '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
-            style: TextStyle(color: textColor),
-          ),
+          Text('#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}', style: TextStyle(color: textColor)),
         ],
       ),
     );

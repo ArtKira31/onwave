@@ -11,5 +11,11 @@
         "type": "int"
       }
     }
-  }
+  },
+  "retry": "Повторить",
+"@retry": { "description": "Кнопка повтора" },
+"errorNetworkTitle": "Нет подключения к сети",
+"errorNetworkSubtitle": "Проверьте интернет и попробуйте ещё раз.",
+"errorGenericTitle": "Что-то пошло не так",
+"errorGenericSubtitle": "Не удалось загрузить данные. Попробуйте ещё раз."
 }
