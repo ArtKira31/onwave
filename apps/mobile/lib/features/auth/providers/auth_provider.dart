@@ -58,6 +58,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  /// Сетевой слой (ONW-47) тихо обновил access-токен. Сами токены уже
+  /// записаны в хранилище, здесь только актуализируем состояние.
+  void sessionRefreshed(String accessToken) {
+    if (!state.isAuthenticated) return;
+    state = AuthState(
+      isAuthenticated: true,
+      accessToken: accessToken,
+      deviceId: state.deviceId,
+    );
+  }
+
   /// Логаут с полной очисткой Keystore и сбросом кэшей ответов
   Future<void> logout() async {
     // 1. Стираем все токены из Keychain / Keystore

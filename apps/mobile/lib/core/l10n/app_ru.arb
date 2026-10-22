@@ -13,9 +13,57 @@
     }
   },
   "retry": "Повторить",
-"@retry": { "description": "Кнопка повтора" },
-"errorNetworkTitle": "Нет подключения к сети",
-"errorNetworkSubtitle": "Проверьте интернет и попробуйте ещё раз.",
-"errorGenericTitle": "Что-то пошло не так",
-"errorGenericSubtitle": "Не удалось загрузить данные. Попробуйте ещё раз."
+  "@retry": {
+    "description": "Кнопка повтора"
+  },
+  "errorNetworkTitle": "Нет подключения к сети",
+  "errorNetworkSubtitle": "Проверьте интернет и попробуйте ещё раз.",
+  "errorGenericTitle": "Что-то пошло не так",
+  "errorGenericSubtitle": "Не удалось загрузить данные. Попробуйте ещё раз.",
+  "feedEmptyTitle": "Событий пока нет",
+  "feedEmptySubtitle": "В этом городе нет событий для выбранного фильтра. Загляните позже или измените фильтр.",
+  "feedErrorTitle": "Не удалось загрузить ленту",
+  "feedErrorSubtitle": "Проверьте подключение к интернету и попробуйте ещё раз.",
+  "refresh": "Обновить",
+  "@refresh": {
+    "description": "Кнопка обновления"
+  },
+  "offlineBanner": "Нет подключения к сети",
+  "@offlineBanner": {
+    "description": "Офлайн-баннер"
+  },
+  "staleBanner": "Данные устарели · обновлено {time}",
+  "@staleBanner": {
+    "description": "Пометка, что показан кэш",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "feedRefreshFailed": "Не удалось обновить ленту",
+  "@feedRefreshFailed": {
+    "description": "Снекбар при неудачном pull-to-refresh"
+  },
+  "feedLoadMoreFailed": "Не удалось загрузить ещё",
+  "@feedLoadMoreFailed": {
+    "description": "Ошибка подгрузки следующей страницы"
+  },
+  "categoryConcerts": "Концерты",
+  "categoryTheatre": "Театр",
+  "categoryExhibitions": "Выставки",
+  "categorySport": "Спорт",
+  "categoryParties": "Вечеринки",
+  "categoryKids": "Детям",
+  "categoryEducation": "Образование",
+  "categoryOther": "Другое",
+  "moreDates": "и ещё {count, plural, one{{count} дата} few{{count} даты} other{{count} дат}}",
+  "@moreDates": {
+    "description": "Дополнительные даты события",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
