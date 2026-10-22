@@ -8,6 +8,7 @@ import 'package:mobile/core/ui/empty_state.dart';
 import 'package:mobile/core/ui/error_state.dart';
 import 'package:mobile/core/ui/event_card.dart';
 import 'package:mobile/core/ui/skeleton_loader.dart';
+import 'package:mobile/features/city/presentation/widgets/city_button.dart';
 import 'package:mobile/features/feed/presentation/category_label.dart';
 import 'package:mobile/features/feed/presentation/widgets/feed_banners.dart';
 import 'package:mobile/features/feed/providers/feed_controller.dart';
@@ -32,7 +33,7 @@ class FeedScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.feedTitle)),
+      appBar: AppBar(title: const CityButton()),
       body: Column(
         children: [
           if (!online) const OfflineBanner(),

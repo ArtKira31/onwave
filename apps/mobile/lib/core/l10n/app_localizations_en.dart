@@ -109,4 +109,90 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get onboardingCityTitle => 'Choose your city';
+
+  @override
+  String get onboardingCitySubtitle =>
+      'We\'ll show events near you. No sign-up needed.';
+
+  @override
+  String get citySearchHint => 'Search city';
+
+  @override
+  String get cityDetectAuto => 'Detect automatically';
+
+  @override
+  String get cityDetecting => 'Detecting…';
+
+  @override
+  String get cityDetectExplanation =>
+      'We\'ll find the nearest city. Your location is requested once, only for this, and is never sent anywhere.';
+
+  @override
+  String get cityDetectNoNearby =>
+      'There are no available cities near you yet. Pick a city from the list.';
+
+  @override
+  String get cityDetectServicesOff =>
+      'Location is turned off on this device. Turn it on or pick a city from the list.';
+
+  @override
+  String get cityDetectDenied =>
+      'No access to location. No problem: pick a city from the list.';
+
+  @override
+  String get cityDetectDeniedForever =>
+      'Location access is blocked in settings. Pick a city from the list or allow access.';
+
+  @override
+  String get cityDetectOpenSettings => 'Open settings';
+
+  @override
+  String get cityDetectUnavailable =>
+      'Couldn\'t determine your location. Pick a city from the list.';
+
+  @override
+  String get citySearchEmptyTitle => 'City not found';
+
+  @override
+  String get citySearchEmptySubtitle =>
+      'Check the name or pick a city from the list.';
+
+  @override
+  String get cityListErrorTitle => 'Couldn\'t load cities';
+
+  @override
+  String onboardingCityChosen(String city) {
+    return 'City: $city';
+  }
+
+  @override
+  String get onboardingValueTitle => 'Everything happening in your city';
+
+  @override
+  String get onboardingValue1 =>
+      'Concerts, theatre, exhibitions and parties in one feed';
+
+  @override
+  String get onboardingValue2 => 'Upcoming dates and venues without the search';
+
+  @override
+  String get onboardingValue3 => 'Save what you like to favorites';
+
+  @override
+  String get onboardingStart => 'Open the feed';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get citySelectTitle => 'Choose city';
+
+  @override
+  String get cityChange => 'Change city';
+
+  @override
+  String get profileCity => 'City';
 }

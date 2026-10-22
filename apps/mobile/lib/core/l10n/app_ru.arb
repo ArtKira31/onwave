@@ -65,5 +65,38 @@
         "type": "int"
       }
     }
-  }
+  },
+  "onboardingCityTitle": "Выберите город",
+  "onboardingCitySubtitle": "Покажем события рядом с вами. Регистрация не нужна.",
+  "citySearchHint": "Поиск города",
+  "cityDetectAuto": "Определить автоматически",
+  "cityDetecting": "Определяем…",
+  "cityDetectExplanation": "Найдём ближайший к вам город. Положение запрашивается один раз, только для этого, и никуда не отправляется.",
+  "cityDetectNoNearby": "Рядом с вами пока нет доступных городов. Выберите город из списка.",
+  "cityDetectServicesOff": "Геолокация выключена на устройстве. Включите её или выберите город из списка.",
+  "cityDetectDenied": "Нет доступа к геолокации. Ничего страшного: выберите город из списка.",
+  "cityDetectDeniedForever": "Доступ к геолокации запрещён в настройках. Выберите город из списка или разрешите доступ.",
+  "cityDetectOpenSettings": "Открыть настройки",
+  "cityDetectUnavailable": "Не удалось определить местоположение. Выберите город из списка.",
+  "citySearchEmptyTitle": "Город не найден",
+  "citySearchEmptySubtitle": "Проверьте название или выберите город из списка.",
+  "cityListErrorTitle": "Не удалось загрузить города",
+  "onboardingCityChosen": "Город: {city}",
+  "@onboardingCityChosen": {
+    "description": "Выбранный город на втором экране онбординга",
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingValueTitle": "Всё интересное в вашем городе",
+  "onboardingValue1": "Концерты, театр, выставки и вечеринки в одной ленте",
+  "onboardingValue2": "Ближайшие даты и площадки без лишнего поиска",
+  "onboardingValue3": "Сохраняйте понравившееся в избранное",
+  "onboardingStart": "В ленту",
+  "onboardingSkip": "Пропустить",
+  "citySelectTitle": "Выбор города",
+  "cityChange": "Сменить город",
+  "profileCity": "Город"
 }

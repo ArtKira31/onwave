@@ -2,26 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/l10n/app_localizations.dart';
+import 'package:mobile/core/navigation/app_router.dart';
 
 import 'auth/providers/auth_provider.dart';
 import 'city/providers/city_provider.dart';
-
-class OnboardingScreen extends ConsumerWidget {
-  const OnboardingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () => ref.read(cityProvider.notifier).selectCity('tbilisi'),
-          child: Text(l10n.selectCity),
-        ),
-      ),
-    );
-  }
-}
 
 class LoginScreen extends ConsumerWidget {
   final String? from;
@@ -87,11 +71,28 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final cityName = ref.watch(cityNameProvider) ?? ref.watch(cityProvider);
     return Scaffold(
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () => ref.read(authProvider.notifier).logout(),
-          child: const Text('Выйти из аккаунта'),
+      body: SafeArea(
+        child: Column(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.location_on_outlined),
+              title: Text(l10n.profileCity),
+              subtitle: cityName == null ? null : Text(cityName),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => const CitySelectRoute().push(context),
+            ),
+            Expanded(
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: () => ref.read(authProvider.notifier).logout(),
+                  child: const Text('Выйти из аккаунта'),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

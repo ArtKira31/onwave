@@ -111,4 +111,90 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return 'и ещё $_temp0';
   }
+
+  @override
+  String get onboardingCityTitle => 'Выберите город';
+
+  @override
+  String get onboardingCitySubtitle =>
+      'Покажем события рядом с вами. Регистрация не нужна.';
+
+  @override
+  String get citySearchHint => 'Поиск города';
+
+  @override
+  String get cityDetectAuto => 'Определить автоматически';
+
+  @override
+  String get cityDetecting => 'Определяем…';
+
+  @override
+  String get cityDetectExplanation =>
+      'Найдём ближайший к вам город. Положение запрашивается один раз, только для этого, и никуда не отправляется.';
+
+  @override
+  String get cityDetectNoNearby =>
+      'Рядом с вами пока нет доступных городов. Выберите город из списка.';
+
+  @override
+  String get cityDetectServicesOff =>
+      'Геолокация выключена на устройстве. Включите её или выберите город из списка.';
+
+  @override
+  String get cityDetectDenied =>
+      'Нет доступа к геолокации. Ничего страшного: выберите город из списка.';
+
+  @override
+  String get cityDetectDeniedForever =>
+      'Доступ к геолокации запрещён в настройках. Выберите город из списка или разрешите доступ.';
+
+  @override
+  String get cityDetectOpenSettings => 'Открыть настройки';
+
+  @override
+  String get cityDetectUnavailable =>
+      'Не удалось определить местоположение. Выберите город из списка.';
+
+  @override
+  String get citySearchEmptyTitle => 'Город не найден';
+
+  @override
+  String get citySearchEmptySubtitle =>
+      'Проверьте название или выберите город из списка.';
+
+  @override
+  String get cityListErrorTitle => 'Не удалось загрузить города';
+
+  @override
+  String onboardingCityChosen(String city) {
+    return 'Город: $city';
+  }
+
+  @override
+  String get onboardingValueTitle => 'Всё интересное в вашем городе';
+
+  @override
+  String get onboardingValue1 =>
+      'Концерты, театр, выставки и вечеринки в одной ленте';
+
+  @override
+  String get onboardingValue2 => 'Ближайшие даты и площадки без лишнего поиска';
+
+  @override
+  String get onboardingValue3 => 'Сохраняйте понравившееся в избранное';
+
+  @override
+  String get onboardingStart => 'В ленту';
+
+  @override
+  String get onboardingSkip => 'Пропустить';
+
+  @override
+  String get citySelectTitle => 'Выбор города';
+
+  @override
+  String get cityChange => 'Сменить город';
+
+  @override
+  String get profileCity => 'Город';
 }

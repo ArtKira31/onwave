@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/features/debug_design_system_screen.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/city/presentation/city_select_screen.dart';
+import '../../features/city/presentation/onboarding_screen.dart';
 import '../../features/city/providers/city_provider.dart';
 import '../../features/dummy_screens.dart';
 import 'package:mobile/features/feed/presentation/feed_screen.dart';
@@ -68,6 +70,16 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const OnboardingScreen();
+}
+
+/// Смена города после онбординга (из шапки ленты и из профиля).
+@TypedGoRoute<CitySelectRoute>(path: '/city')
+class CitySelectRoute extends GoRouteData with $CitySelectRoute {
+  const CitySelectRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CitySelectScreen();
 }
 
 @TypedGoRoute<LoginRoute>(path: '/login')

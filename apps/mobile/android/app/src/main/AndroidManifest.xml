@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Сеть нужна и в release-сборках (в debug/profile она добавляется сама). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Приблизительная геолокация: один раз определить ближайший город (ONW-49). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="@string/app_name"
         android:allowBackup="false"

@@ -84,5 +84,7 @@
 			</array>
 		</dict>
 	</array>
+	  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Нужна, чтобы один раз определить ближайший к вам город.</string>
 </dict>
 </plist>

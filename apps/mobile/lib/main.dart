@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/l10n/app_localizations.dart';
+import 'package:mobile/core/storage/preferences_provider.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/navigation/app_router.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MyApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Выбранный город читаем до первого кадра: так роутер сразу знает, нужен ли
+  // онбординг, и при повторном запуске он не мигает.
+  final prefs = await SharedPreferences.getInstance();
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {

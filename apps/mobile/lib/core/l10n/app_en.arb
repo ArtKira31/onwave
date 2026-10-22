@@ -49,5 +49,37 @@
         "type": "int"
       }
     }
-  }
+  },
+  "onboardingCityTitle": "Choose your city",
+  "onboardingCitySubtitle": "We'll show events near you. No sign-up needed.",
+  "citySearchHint": "Search city",
+  "cityDetectAuto": "Detect automatically",
+  "cityDetecting": "Detecting…",
+  "cityDetectExplanation": "We'll find the nearest city. Your location is requested once, only for this, and is never sent anywhere.",
+  "cityDetectNoNearby": "There are no available cities near you yet. Pick a city from the list.",
+  "cityDetectServicesOff": "Location is turned off on this device. Turn it on or pick a city from the list.",
+  "cityDetectDenied": "No access to location. No problem: pick a city from the list.",
+  "cityDetectDeniedForever": "Location access is blocked in settings. Pick a city from the list or allow access.",
+  "cityDetectOpenSettings": "Open settings",
+  "cityDetectUnavailable": "Couldn't determine your location. Pick a city from the list.",
+  "citySearchEmptyTitle": "City not found",
+  "citySearchEmptySubtitle": "Check the name or pick a city from the list.",
+  "cityListErrorTitle": "Couldn't load cities",
+  "onboardingCityChosen": "City: {city}",
+  "@onboardingCityChosen": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingValueTitle": "Everything happening in your city",
+  "onboardingValue1": "Concerts, theatre, exhibitions and parties in one feed",
+  "onboardingValue2": "Upcoming dates and venues without the search",
+  "onboardingValue3": "Save what you like to favorites",
+  "onboardingStart": "Open the feed",
+  "onboardingSkip": "Skip",
+  "citySelectTitle": "Choose city",
+  "cityChange": "Change city",
+  "profileCity": "City"
 }
